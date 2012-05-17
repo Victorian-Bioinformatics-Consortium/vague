@@ -9,7 +9,7 @@ class GuessFastaType
         return :fastq_gz if ch=='@'
         return :unknown_gz
       end
-    rescue Zlib::GzipFile::Error  
+    rescue Zlib::GzipFile::Error
     end
     File.open(file) do |f|
       ch = f.readchar.chr
@@ -17,5 +17,7 @@ class GuessFastaType
       return :fastq if ch=='@'
       return :unknown
     end
+  rescue
+    return :unknown
   end
 end
