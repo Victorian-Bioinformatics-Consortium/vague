@@ -205,19 +205,49 @@ class MainOptions < JComponent
 
 end
 
+class VelvetInfo < JComponent
+  def initialize(velvetg, velveth)
+    super()
+    @velvetg = velvetg
+    @velveth = velveth
+
+    setBorder(TitledBorder.new("Info"))
+    setLayout BorderLayout.new
+    add(box = Box.createHorizontalBox)
+    if @velveth.found
+      box.add(JLabel.new("Using Velvet version : "+ @velveth.version))
+    else
+      if @velveth.path
+        msg="Unable to find velvet binaries in #{@velveth.path}"
+      else
+        msg="Unable to find velvet binaries in the system PATH"
+      end
+      box.add(JLabel.new(msg))
+    end
+    box.add(but = JButton.new("Select path to binary"))
+    but.add_action_listener {|e| select_velvet_dir }
+  end
+
+  def select_velvet_dir
+    fc=JFileChooser.new(@velveth.path)
+    fc.setFileSelectionMode(JFileChooser::DIRECTORIES_ONLY);
+    if fc.showOpenDialog(self)==0
+      firePropertyChange("path", nil, fc.getSelectedFile.getPath)
+    end
+  end
+end
 
 class VelvetGUI < JFrame
   def initialize
     super "Velvet"
 
+    @velveth=VelvetBinary.new(nil,"velveth")
+    @velvetg=VelvetBinary.new(nil,"velvetg")
     query_velvet
     create_components
   end
 
   def query_velvet
-    @velveth=VelvetBinary.new("/Users/drpowell/vbc/velvet_1.2.03/velveth")
-    @velvetg=VelvetBinary.new("/Users/drpowell/vbc/velvet_1.2.03/velvetg")
-
     # Make velveth options into "flags" which is how the binary expects them
     @velveth.std_options.each {|opt| opt.type='flag' if opt.type.nil? }
 
@@ -230,10 +260,21 @@ class VelvetGUI < JFrame
     end
   end
 
+  def update_velvet_path(path)
+    @velveth=VelvetBinary.new(path,"velveth")
+    @velvetg=VelvetBinary.new(path,"velvetg")
+    content_pane.removeAll
+    query_velvet
+    create_components
+  end
+
   def create_components
     setDefaultCloseOperation JFrame::EXIT_ON_CLOSE
 
-    add(vbox = Box.createVerticalBox)
+    content_pane.add(vbox = Box.createVerticalBox)
+    vbox.add(@info = VelvetInfo.new(@velveth, @velvetg))
+    @info.add_property_change_listener("path") {|e| update_velvet_path(e.new_value) }
+
     vbox.add(hbox = Box.createHorizontalBox)
     hbox.add(@main_opts  = MainOptions.new)
     hbox.add JScrollPane.new(OptionList.new(@velveth.std_options + @velvetg.std_options))
@@ -251,14 +292,14 @@ class VelvetGUI < JFrame
 
     vbox.add(@console = JTextField.new)
 
-    pack
-    #setSize 800, 600
+    #pack
+    setSize 800, 600
   end
 
   def toggle_add_del
     @delCh.visible = @filesSelector.num_channels > 1
     @addCh.visible = @filesSelector.num_channels < @max_channels
-    pack
+    #pack
   end
 
   def analyze

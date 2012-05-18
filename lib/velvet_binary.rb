@@ -1,9 +1,10 @@
 require 'options'
 
 class VelvetBinary
-  attr_reader :comp_options, :std_options, :version
-  def initialize(binary)
-    @velveth = binary
+  attr_reader :comp_options, :std_options, :version, :found, :path
+  def initialize(path,binary)
+    @binary = binary
+    @path = path
     @comp_options ||= {}
     @std_options = Options.new
     parse_options
@@ -11,15 +12,18 @@ class VelvetBinary
   end
 
   def parse_options
-    IO.popen(@velveth) do |pipe|
+    exe = @path ? File.join(@path, @binary) : @binary
+    IO.popen(exe) do |pipe|
       info = pipe.read
       info.scan(/^Version (\S+)/m) { |m| @version=m.first }
       info.scan(/^Compilation settings:(.*?\n)\n/m) { |m| parse_config_options m.first }
       info.scan(/^Options:(.*?\n)\n/m) { |m| parse_standard_options m.first }
       info.scan(/^Standard options:(.*?\n)\n/m) { |m| parse_standard_options m.first }
       info.scan(/^Advanced options:(.*?\n)\n/m) { |m| parse_standard_options m.first }
+      @found = true
     end
   rescue => e
+    @found = false
     puts "Cannot run binary : #{e}"
   end
 
