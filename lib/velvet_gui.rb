@@ -171,20 +171,30 @@ class MainOptions < JComponent
     initGridBag
     setBorder(TitledBorder.new("Main Options"))
 
-    add_gb(JLabel.new("Output Directory: "), :gridwidth => 1, :fill => :horizontal, :anchor => :northwest)
-    add_gb(@file1 = JTextField.new, :weightx => 1)
+    add_gb(JLabel.new("Output Directory: "), :gridwidth => 1, :fill => :horizontal, :anchor => :northwest, :weightx=>0)
+    add_gb(@file1 = JTextField.new, :weightx => 1, :gridwidth=>2)
     add_gb(file1Btn = JButton.new("..."), :gridwidth => :remainder, :weightx => 0)
     file1Btn.add_action_listener {|e| select_file(@file1) }
 
-    add_gb(JLabel.new("Hash Length: "), :gridwidth => 1, :fill => :horizontal)
-    add_gb(@cutoff = JComboBox.new((1..31).step(2).to_a.to_java), :gridwidth=>:remainder, :weightx=>0, :fill => :none)
-    @cutoff.selected_item = 31
+    add_gb(JLabel.new("Hash Length: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
+    add_gb(@hash_length = JComboBox.new((1..31).step(2).to_a.to_java), :gridwidth=>:remainder, :weightx=>0, :fill => :none)
+    @hash_length.selected_item = 31
 
-    add_gb(JLabel.new("Coverage Cutoff: "), :gridwidth => 1, :fill => :horizontal)
-    add_gb(JTextField.new, :weightx => 1, :gridwidth=>:remainder, :weightx=>0, :fill => :none)
+    add_gb(JLabel.new("Coverage Cutoff: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
+    add_gb(@cutoff_combo = JComboBox.new(["Auto","Custom"].to_java), :fill => :none)
+    add_gb(@cutoff_tf = JTextField.new(), :gridwidth=>:remainder, :weightx=>1, :fill => :horizontal)
 
-    add_gb(JLabel.new("Expected Coverage: "), :gridwidth => 1, :fill => :horizontal)
-    add_gb(JTextField.new, :weightx => 1, :gridwidth=>:remainder, :weightx=>0, :fill => :none)
+    add_gb(JLabel.new("Expected Coverage: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
+    add_gb(@cov_combo = JComboBox.new(["Auto","Custom"].to_java), :fill => :none)
+    add_gb(@cov_tf = JTextField.new(), :gridwidth=>:remainder, :weightx=>1, :fill => :horizontal)
+    @cutoff_combo.add_action_listener {|e| set_custom_vis(@cutoff_combo, @cutoff_tf) }
+    @cov_combo.add_action_listener {|e| set_custom_vis(@cov_combo, @cov_tf) }
+    set_custom_vis(@cutoff_combo, @cutoff_tf)
+    set_custom_vis(@cov_combo, @cov_tf)
+  end
+
+  def set_custom_vis(combo, tf)
+    tf.enabled = combo.selected_item != "Auto"
   end
 
   def select_file(fileField)
@@ -200,7 +210,7 @@ class MainOptions < JComponent
   end
 
   def hash_length
-    @cutoff.selected_item
+    @hash_length.selected_item
   end
 
 end
