@@ -8,6 +8,7 @@ include_class %w(java.awt.event.ActionListener
                  java.awt.GridBagLayout
                  java.awt.GridBagConstraints
                  java.awt.Dimension
+                 java.lang.System
                  javax.swing.JOptionPane
                  javax.swing.SwingUtilities
                  javax.swing.JButton
@@ -250,6 +251,9 @@ end
 class VelvetGUI < JFrame
   def initialize
     super "Velvet"
+
+    System.setProperty("awt.useSystemAAFontSettings","on");
+    System.setProperty("swing.aatext", "true");
 
     @velveth=VelvetBinary.new(nil,"velveth")
     @velvetg=VelvetBinary.new(nil,"velvetg")
