@@ -30,7 +30,7 @@ include_class %w(java.awt.event.ActionListener
 
 class Settings
   def self.prefs
-    @prefs ||= Preferences.userNodeForPackage(self);
+    @prefs ||= Preferences.userRoot.node('vbc/vague')
   end
 
   def self.velvet_directory
@@ -191,8 +191,11 @@ end
 
 class MainOptions < JComponent
   include GridBag
-  def initialize()
+  def initialize(max_kmer)
     super()
+    @max_kmer = max_kmer.to_i || 31
+    @default_kmer = 31
+
     initGridBag
     setBorder(TitledBorder.new("Main Options"))
 
@@ -202,20 +205,33 @@ class MainOptions < JComponent
     file1Btn.add_action_listener {|e| select_file(@file1) }
 
     add_gb(JLabel.new("Hash Length: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
-    add_gb(@hash_length = JComboBox.new((1..31).step(2).to_a.to_java), :gridwidth=>:remainder, :weightx=>0, :fill => :none)
-    @hash_length.selected_item = 31
+    add_gb(@hash_length = JComboBox.new((5..@max_kmer).step(2).to_a.to_java), :gridwidth=>:remainder, :weightx=>0, :fill => :none)
+    @hash_length.selected_item = @default_kmer
 
     add_gb(JLabel.new("Coverage Cutoff: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
-    add_gb(@cutoff_combo = JComboBox.new(["Auto","Custom"].to_java), :fill => :none)
+    add_gb(@cutoff_combo = JComboBox.new(["Auto","Custom","Don't use"].to_java), :fill => :none)
     add_gb(@cutoff_tf = JTextField.new(), :gridwidth=>:remainder, :weightx=>1, :fill => :horizontal)
 
     add_gb(JLabel.new("Expected Coverage: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
-    add_gb(@cov_combo = JComboBox.new(["Auto","Custom"].to_java), :fill => :none)
-    add_gb(@cov_tf = JTextField.new(), :gridwidth=>:remainder, :weightx=>1, :fill => :horizontal)
+    add_gb(@estcov_combo = JComboBox.new(["Auto","Custom", "Don't use"].to_java), :fill => :none)
+    add_gb(@estcov_tf = JTextField.new(), :gridwidth=>:remainder, :weightx=>1, :fill => :horizontal)
     @cutoff_combo.add_action_listener {|e| set_custom_vis(@cutoff_combo, @cutoff_tf) }
-    @cov_combo.add_action_listener {|e| set_custom_vis(@cov_combo, @cov_tf) }
+    @estcov_combo.add_action_listener {|e| set_custom_vis(@estcov_combo, @estcov_tf) }
     set_custom_vis(@cutoff_combo, @cutoff_tf)
-    set_custom_vis(@cov_combo, @cov_tf)
+    set_custom_vis(@estcov_combo, @estcov_tf)
+
+    add_gb(JLabel.new("Min. contig length: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
+    add_gb(@min_contig_len_combo = JComboBox.new(["Auto","Custom"].to_java), :fill => :none)
+    add_gb(@min_contig_len_tf = JTextField.new(), :gridwidth=>:remainder, :weightx=>1, :fill => :horizontal)
+    @min_contig_len_combo.add_action_listener {|e| set_custom_vis(@min_contig_len_combo, @min_contig_len_tf) }
+    set_custom_vis(@min_contig_len_combo, @min_contig_len_tf)
+    @min_contig_len_combo.selected_item = 'Custom'
+    @min_contig_len_tf.text = 500.to_s
+    @hash_length.add_action_listener {|e| update_auto_contig_length }
+    update_auto_contig_length
+
+    add_gb(JLabel.new("Read Tracking: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
+    add_gb(@read_tracking = JCheckBox.new(), :gridwidth=>:remainder, :fill => :none)
   end
 
   def set_custom_vis(combo, tf)
@@ -224,9 +240,47 @@ class MainOptions < JComponent
 
   def select_file(fileField)
     fc=JFileChooser.new(fileField.text)
-    fc.setFileSelectionMode(JFileChooser::DIRECTORIES_ONLY);
+    fc.setFileSelectionMode(JFileChooser::DIRECTORIES_ONLY)
     if fc.showOpenDialog(fileField)==0
       fileField.set_text fc.getSelectedFile.getPath
+    end
+  end
+
+  def update_auto_contig_length
+    if @min_contig_len_combo.selected_item == 'Auto'
+      @min_contig_len_tf.text = (2 * @hash_length.selected_item).to_s
+    end
+  end
+
+  def cutoff_option
+    case @cutoff_combo.selected_item
+    when 'Auto':   ['-cov_cutoff=auto']
+    when 'Custom': ['-cov_cutoff=#{@cutoff_tf.text}']
+    else []
+    end
+  end
+
+  def estcov_option
+    case @estcov_combo.selected_item
+    when 'Auto':   ['-exp_cov=auto']
+    when 'Custom': ['-exp_cov=#{@estcov_tf.text}']
+    else []
+    end
+  end
+
+  def read_tracking_option
+    if @read_tracking.selected?
+      ["-read_trkg=yes"]
+    else
+      []
+    end
+  end
+
+  def min_contig_len_option
+    if @min_contig_len_combo.selected_item=="Custom"
+      ["-min_contig_lgth=#{@min_contig_len_tf.text}"]
+    else
+      []
     end
   end
 
@@ -234,10 +288,13 @@ class MainOptions < JComponent
     @file1.text
   end
 
-  def hash_length
-    @hash_length.selected_item
+  def velveth_command_line
+    [out_directory, @hash_length.selected_item]
   end
 
+  def velvetg_command_line
+    [out_directory] + cutoff_option + estcov_option + read_tracking_option + min_contig_len_option
+  end
 end
 
 class VelvetInfo < JComponent
@@ -265,7 +322,7 @@ class VelvetInfo < JComponent
 
   def select_velvet_dir
     fc=JFileChooser.new(@velveth.path)
-    fc.setFileSelectionMode(JFileChooser::DIRECTORIES_ONLY);
+    fc.setFileSelectionMode(JFileChooser::DIRECTORIES_ONLY)
     if fc.showOpenDialog(self)==0
       firePropertyChange("path", nil, fc.getSelectedFile.getPath)
     end
@@ -276,8 +333,8 @@ class VelvetGUI < JFrame
   def initialize
     super "Velvet"
 
-    System.setProperty("awt.useSystemAAFontSettings","on");
-    System.setProperty("swing.aatext", "true");
+    System.setProperty("awt.useSystemAAFontSettings","on")
+    System.setProperty("swing.aatext", "true")
 
     path = Settings.velvet_directory
     @velveth=VelvetBinary.new(path,"velveth")
@@ -316,7 +373,7 @@ class VelvetGUI < JFrame
     @info.add_property_change_listener("path") {|e| update_velvet_path(e.new_value) }
 
     vbox.add(hbox = Box.createHorizontalBox)
-    hbox.add(@main_opts  = MainOptions.new)
+    hbox.add(@main_opts  = MainOptions.new(@velveth.comp_options['MAXKMERLENGTH']))
     hbox.add JScrollPane.new(OptionList.new(@velveth.std_options + @velvetg.std_options))
 
     vbox.add(@filesSelector = FilesSelector.new)
@@ -352,8 +409,14 @@ class VelvetGUI < JFrame
       JOptionPane.showMessageDialog(self, "Invalid sequence file(s)", "Invalid", JOptionPane::ERROR_MESSAGE)
       return
     end
-    puts "RUN : velveth #{out_dir} #{@main_opts.hash_length} #{@filesSelector.to_command_line.join ' '} #{@velveth.std_options.to_command_line.join ' '}"
-    puts "RUN : velvetg #{out_dir} #{@velvetg.std_options.to_command_line.join ' '}"
+    velveth_command_line = @main_opts.velveth_command_line +
+                            @filesSelector.to_command_line +
+                            @velveth.std_options.to_command_line
+    puts "RUN : velveth #{velveth_command_line.join ' '}"
+
+    velvetg_command_line = @main_opts.velvetg_command_line +
+                            @velvetg.std_options.to_command_line
+    puts "RUN : velvetg #{velvetg_command_line.join ' '}"
   end
 end
 
