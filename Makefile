@@ -1,4 +1,4 @@
 
 all:
-	rm -f Vgui.jar
+	rm -f vague.jar
 	jruby -S warble compiled jar
