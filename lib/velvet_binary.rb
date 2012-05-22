@@ -4,7 +4,7 @@ class VelvetBinary
   attr_reader :comp_options, :std_options, :version, :found, :path
   def initialize(path,binary)
     @binary = binary
-    @path = path
+    @path = (path.nil? || path.length==0) ? nil : path
     @comp_options ||= {}
     @std_options = Options.new
     parse_options

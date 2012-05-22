@@ -9,6 +9,7 @@ include_class %w(java.awt.event.ActionListener
                  java.awt.GridBagConstraints
                  java.awt.Dimension
                  java.lang.System
+                 java.util.prefs.Preferences
                  javax.swing.JOptionPane
                  javax.swing.SwingUtilities
                  javax.swing.JButton
@@ -26,6 +27,21 @@ include_class %w(java.awt.event.ActionListener
                  javax.swing.JScrollPane
                  javax.swing.border.TitledBorder
                 )
+
+class Settings
+  def self.prefs
+    @prefs ||= Preferences.userNodeForPackage(self);
+  end
+
+  def self.velvet_directory
+    prefs.get("velvet_directory", "")
+  end
+
+  def self.velvet_directory=(str)
+    prefs.put("velvet_directory", str)
+  end
+
+end
 
 class FileSelector < JComponent
   include GridBag
@@ -263,8 +279,9 @@ class VelvetGUI < JFrame
     System.setProperty("awt.useSystemAAFontSettings","on");
     System.setProperty("swing.aatext", "true");
 
-    @velveth=VelvetBinary.new(nil,"velveth")
-    @velvetg=VelvetBinary.new(nil,"velvetg")
+    path = Settings.velvet_directory
+    @velveth=VelvetBinary.new(path,"velveth")
+    @velvetg=VelvetBinary.new(path,"velvetg")
     query_velvet
     create_components
   end
@@ -283,6 +300,7 @@ class VelvetGUI < JFrame
   end
 
   def update_velvet_path(path)
+    Settings.velvet_directory = path
     @velveth=VelvetBinary.new(path,"velveth")
     @velvetg=VelvetBinary.new(path,"velvetg")
     content_pane.removeAll
