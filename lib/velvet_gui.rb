@@ -29,9 +29,9 @@ include_class %w(java.awt.event.ActionListener
 
 class FileSelector < JComponent
   include GridBag
-  def initialize
-    super
-    setBorder(TitledBorder.new("Sequence File"))
+  def initialize(num)
+    super()
+    setBorder(TitledBorder.new("Channel #{num} Sequences"))
     initGridBag
 
     add_gb(JLabel.new("Read type: "), :gridwidth => 1, :fill => :horizontal, :anchor => :northwest)
@@ -71,9 +71,13 @@ class FileSelector < JComponent
     end
   end
 
+  def separate_files
+    @interleaved.visible && @interleaved.selected_item == 'separate'
+  end
+
   def update_boxes
     @interleaved.visible = @intLbl.visible = (@typ.selected_item != "single")
-    @file2Lbl.visible = @file2.visible = @file2Btn.visible = (@interleaved.visible && @interleaved.selected_item == 'separate')
+    @file2Lbl.visible = @file2.visible = @file2Btn.visible = separate_files
     @file1Lbl.text = @file2Lbl.visible? ? "Left Sequence file: " : "Sequence file: "
     revalidate
   end
@@ -87,7 +91,11 @@ class FileSelector < JComponent
   end
 
   def to_command_line(n)
-    ["-"+@fmt.selected_item, "-"+read_type+(n==1 ? '' : n.to_s), @file1.text]
+    if separate_files
+      ["-separate","-"+@fmt.selected_item, "-#{read_type}#{n}", @file1.text, @file2.text]
+    else
+      ["-interleaved","-"+@fmt.selected_item, "-#{read_type}#{n}", @file1.text]
+    end
   end
 
   def valid_files
@@ -112,7 +120,7 @@ class FilesSelector < JComponent
   end
 
   def add_channel
-    @vbox.add(sel = FileSelector.new)
+    @vbox.add(sel = FileSelector.new(@selectors.length+1))
     @selectors << sel
     validate
   end
@@ -159,7 +167,7 @@ class OptionList < JComponent
     else
       w = JTextField.new(opt.value)
       w.setToolTipText opt.desc
-      w.get_document.add_document_listener {|e| opt.value = tf.getText}
+      w.get_document.add_document_listener {|e| opt.value = w.getText}
     end
     w
   end

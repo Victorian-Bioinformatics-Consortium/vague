@@ -33,10 +33,13 @@ class Options
 
   def to_command_line
     @opts.map do |opt|
-      if opt.type=='flag'
-        opt.value=='yes' ? "-#{opt.name}" : nil
+      case opt.type
+      when 'flag':
+          if opt.value=='yes' then "-#{opt.name}" else nil end
+      when 'yes|no':
+          if opt.value=='yes' then "-#{opt.name}=yes" else nil end
       else
-        "-#{opt.name}=#{opt.value}"
+          if opt.value.nil? || opt.value.empty? then nil else "-#{opt.name}=#{opt.value}" end
       end
     end.compact
   end
