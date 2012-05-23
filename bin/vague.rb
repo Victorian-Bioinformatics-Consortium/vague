@@ -1,4 +1,4 @@
-#!/usr/bin/env jruby -w
+#!/usr/bin/env jruby --1.9 -w
 
 $LOAD_PATH.unshift("#{File.dirname(__FILE__)}/../lib")
 require 'java'

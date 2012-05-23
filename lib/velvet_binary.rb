@@ -11,8 +11,11 @@ class VelvetBinary
     #puts "For #{binary}, version=#{@version}\n  comp_options=#{@comp_options.inspect}\n  std_options=#{@std_options.inspect}"
   end
 
+  def exe
+    @path ? File.join(@path, @binary) : @binary
+  end
+
   def parse_options
-    exe = @path ? File.join(@path, @binary) : @binary
     IO.popen(exe) do |pipe|
       info = pipe.read
       info.scan(/^Version (\S+)/m) { |m| @version=m.first }

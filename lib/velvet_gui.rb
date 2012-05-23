@@ -2,12 +2,14 @@ require 'java'
 require 'gridbag'
 require 'velvet_binary'
 require 'guess_fasta_type'
+require 'runner'
 
 include_class %w(java.awt.event.ActionListener
                  java.awt.BorderLayout
                  java.awt.GridBagLayout
                  java.awt.GridBagConstraints
                  java.awt.Dimension
+                 java.awt.Color
                  java.lang.System
                  java.util.prefs.Preferences
                  javax.swing.JOptionPane
@@ -16,6 +18,7 @@ include_class %w(java.awt.event.ActionListener
                  javax.swing.JFrame
                  javax.swing.JLabel
                  javax.swing.JTextField
+                 javax.swing.JTextArea
                  javax.swing.JComponent
                  javax.swing.JComboBox
                  javax.swing.JCheckBox
@@ -25,6 +28,7 @@ include_class %w(java.awt.event.ActionListener
                  javax.swing.JButton
                  javax.swing.ImageIcon
                  javax.swing.JScrollPane
+                 javax.swing.JTabbedPane
                  javax.swing.border.TitledBorder
                 )
 
@@ -100,9 +104,12 @@ class FileSelector < JComponent
 
   def read_type
     case @typ.selected_item
-    when 'single': 'short'
-    when 'paired end': 'shortPaired'
-    else 'longPaired'
+    when 'single'
+      'short'
+    when 'paired end'
+      'shortPaired'
+    else
+      'longPaired'
     end
   end
 
@@ -176,7 +183,7 @@ class OptionList < JComponent
   def create_editor(opt)
     w=nil
     case opt.type
-    when 'yes|no', 'flag':
+    when 'yes|no', 'flag'
       w = JCheckBox.new
       w.setToolTipText opt.desc
       w.add_change_listener {|e| w.selected? ? opt.value='yes' : opt.value='no'}
@@ -254,16 +261,16 @@ class MainOptions < JComponent
 
   def cutoff_option
     case @cutoff_combo.selected_item
-    when 'Auto':   ['-cov_cutoff=auto']
-    when 'Custom': ['-cov_cutoff=#{@cutoff_tf.text}']
+    when 'Auto'   ['-cov_cutoff=auto']
+    when 'Custom' ['-cov_cutoff=#{@cutoff_tf.text}']
     else []
     end
   end
 
   def estcov_option
     case @estcov_combo.selected_item
-    when 'Auto':   ['-exp_cov=auto']
-    when 'Custom': ['-exp_cov=#{@estcov_tf.text}']
+    when 'Auto'   ['-exp_cov=auto']
+    when 'Custom' ['-exp_cov=#{@estcov_tf.text}']
     else []
     end
   end
@@ -305,19 +312,35 @@ class VelvetInfo < JComponent
 
     setBorder(TitledBorder.new("Info"))
     setLayout BorderLayout.new
-    add(box = Box.createHorizontalBox)
-    if @velveth.found
-      box.add(JLabel.new("Using Velvet version : "+ @velveth.version))
-    else
-      if @velveth.path
-        msg="Unable to find velvet binaries in #{@velveth.path}"
-      else
-        msg="Unable to find velvet binaries in the system PATH"
-      end
-      box.add(JLabel.new(msg))
-    end
-    box.add(but = JButton.new("Select path to binary"))
+    add(vbox = Box.createVerticalBox)
+
+    vbox.add(hbox = Box.createHorizontalBox)
+    hbox.alignment_x = Box::LEFT_ALIGNMENT
+
+    found_msg = if @velveth.path then "Using" else "Unable to find" end
+    hbox.add(@loc_lbl = JLabel.new(if @velveth.path
+                                     "#{found_msg} velvet in : #{@velveth.path}"
+                                   else
+                                     "#{found_msg} velvet in system PATH"
+                                   end
+                                   ))
+
+    hbox.add(Box.createGlue)
+    hbox.add(but = JButton.new("Set"))
     but.add_action_listener {|e| select_velvet_dir }
+    if @velveth.path
+      hbox.add(but2 = JButton.new("Reset"))
+      but2.add_action_listener {|e| firePropertyChange("path", nil, "") }
+    else
+      @loc_lbl.foreground = Color::red
+    end
+
+    if @velveth.found
+      vbox.add(lbl=JLabel.new("Velvet version : "+ @velveth.version))
+      lbl.alignment_x = Box::LEFT_ALIGNMENT
+    end
+
+    setMaximumSize Dimension.new(getMaximumSize.width, getPreferredSize.height)
   end
 
   def select_velvet_dir
@@ -341,6 +364,12 @@ class VelvetGUI < JFrame
     @velvetg=VelvetBinary.new(path,"velvetg")
     query_velvet
     create_components
+
+    # HACK for testing!
+    if ARGV.length > 0
+      @main_opts.instance_variable_get('@file1').send('text=', ARGV[0])
+      @filesSelector.instance_variable_get('@selectors').first.instance_variable_get('@file1').send('text=', ARGV[1])
+    end
   end
 
   def query_velvet
@@ -368,13 +397,31 @@ class VelvetGUI < JFrame
   def create_components
     setDefaultCloseOperation JFrame::EXIT_ON_CLOSE
 
-    content_pane.add(vbox = Box.createVerticalBox)
+    content_pane.add(@tabs = JTabbedPane.new)
+
+    @tabs.addTab("Main", create_main_tab)
+    @tabs.addTab("Advanced", create_advanced_tab)
+    @tabs.addTab("Log Output",JScrollPane.new(@console = JTextArea.new))
+    @console.editable = false
+
+    #pack
+    setSize 500, 600
+  end
+
+  def create_advanced_tab
+    hide_options = %w(cov_cutoff read_trkg min_contig_lgth)
+    opts = @velveth.std_options + @velvetg.std_options
+    opts = opts.reject {|o| hide_options.include?(o.name) }
+    JScrollPane.new(OptionList.new(opts))
+  end
+
+  def create_main_tab
+    vbox = Box.createVerticalBox
     vbox.add(@info = VelvetInfo.new(@velveth, @velvetg))
     @info.add_property_change_listener("path") {|e| update_velvet_path(e.new_value) }
 
     vbox.add(hbox = Box.createHorizontalBox)
     hbox.add(@main_opts  = MainOptions.new(@velveth.comp_options['MAXKMERLENGTH']))
-    hbox.add JScrollPane.new(OptionList.new(@velveth.std_options + @velvetg.std_options))
 
     vbox.add(@filesSelector = FilesSelector.new)
 
@@ -382,15 +429,12 @@ class VelvetGUI < JFrame
     butBox.add(@addCh = JButton.new("Add channel"))
     butBox.add(@delCh = JButton.new("Remove channel"))
     butBox.add(analyzeBut = JButton.new("Analyze"))
-    analyzeBut.add_action_listener { analyze }
-    @addCh.add_action_listener { @filesSelector.add_channel ; toggle_add_del }
-    @delCh.add_action_listener { @filesSelector.del_channel ; toggle_add_del }
+    analyzeBut.add_action_listener {|e| analyze }
+    @addCh.add_action_listener {|e| @filesSelector.add_channel ; toggle_add_del }
+    @delCh.add_action_listener {|e| @filesSelector.del_channel ; toggle_add_del }
     toggle_add_del
 
-    vbox.add(@console = JTextField.new)
-
-    #pack
-    setSize 800, 600
+    vbox
   end
 
   def toggle_add_del
@@ -409,14 +453,22 @@ class VelvetGUI < JFrame
       JOptionPane.showMessageDialog(self, "Invalid sequence file(s)", "Invalid", JOptionPane::ERROR_MESSAGE)
       return
     end
-    velveth_command_line = @main_opts.velveth_command_line +
+
+    @tabs.selected_index = 2
+
+    velveth_command_line = [@velveth.exe] +
+                            @main_opts.velveth_command_line +
                             @filesSelector.to_command_line +
                             @velveth.std_options.to_command_line
-    puts "RUN : velveth #{velveth_command_line.join ' '}"
+    @console.append ">>> velveth #{velveth_command_line.join ' '}\n"
+    @runner = Runner.new(velveth_command_line)
+    @runner.add_property_change_listener {|e| @console.append e.new_value}
+    @runner.start
 
     velvetg_command_line = @main_opts.velvetg_command_line +
                             @velvetg.std_options.to_command_line
-    puts "RUN : velvetg #{velvetg_command_line.join ' '}"
+    @console.append ">>> velvetg #{velvetg_command_line.join ' '}\n"
   end
 end
+
 
