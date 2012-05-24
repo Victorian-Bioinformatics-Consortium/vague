@@ -1,7 +1,9 @@
 require 'java'
 require 'open3'
 
-include_class %w(java.beans.PropertyChangeSupport)
+include_class %w(java.beans.PropertyChangeSupport
+                 java.lang.ProcessBuilder
+                )
 
 class Runner < PropertyChangeSupport
   attr_reader :ret_val
@@ -23,13 +25,14 @@ class Runner < PropertyChangeSupport
   protected
 
   def run
-    r = IO.popen(@command, 'r') do |out|
-      while line = out.gets   # read the next line from stderr
-        firePropertyChange("stdout", nil, line)
-      end
+    p = ProcessBuilder.new(@command).redirectErrorStream(true).start
+    out = p.getInputStream.to_io
+    while line = out.gets   # read the next line from stderr
+      firePropertyChange("stdout", nil, line)
     end
-    @ret_val = $?
-    firePropertyChange("done", nil, $?)
+    out.close
+    @ret_val = p.exitValue
+    firePropertyChange("done", nil, @ret_val)
   rescue => e
     puts "Failed to run : #{e}"
     firePropertyChange("error", nil, e)

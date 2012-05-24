@@ -312,7 +312,7 @@ class MainOptions < JComponent
   end
 
   def velveth_command_line
-    [out_directory, @hash_length.selected_item]
+    [out_directory, @hash_length.selected_item.to_s]
   end
 
   def velvetg_command_line
@@ -480,10 +480,17 @@ class VelvetGUI < JFrame
                             @main_opts.velveth_command_line +
                             @filesSelector.to_command_line +
                             @velveth.std_options.to_command_line
-    @console.append ">>> #{velveth_command_line.join ' '}\n"
+    @console.append ">>> RUNNING : #{velveth_command_line.join ' '}\n"
     @runner = Runner.new(velveth_command_line)
     @runner.add_property_change_listener('stdout') {|e| @console.append e.new_value}
-    @runner.add_property_change_listener('done') {|e| @console.append "Done!" ; run_velvetg}
+    @runner.add_property_change_listener('done') do |e|
+      if e.new_value == 0
+        @console.append ">>> velveth successful\n"
+        run_velvetg
+      else
+        @console.append ">>> velveth failed\n"
+      end
+    end
     @runner.add_property_change_listener('error') {|e| @console.append "ERROR"}
     @runner.start
   end
@@ -492,10 +499,16 @@ class VelvetGUI < JFrame
     velvetg_command_line = [@velvetg.exe] +
                             @main_opts.velvetg_command_line +
                             @velvetg.std_options.to_command_line
-    @console.append ">>> #{velvetg_command_line.join ' '}\n"
+    @console.append ">>> RUNNING : #{velvetg_command_line.join ' '}\n"
     @runner = Runner.new(velvetg_command_line)
     @runner.add_property_change_listener('stdout') {|e| @console.append e.new_value}
-    @runner.add_property_change_listener('done') {|e| @console.append "Done!"}
+    @runner.add_property_change_listener('done') do |e|
+      if e.new_value == 0
+        @console.append ">>> velvetg successful\n"
+      else
+        @console.append ">>> velvetg failed\n"
+      end
+    end
     @runner.add_property_change_listener('error') {|e| @console.append "ERROR"}
     @runner.start
   end
