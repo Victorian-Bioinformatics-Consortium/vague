@@ -31,6 +31,40 @@ class VelvetResults
   end
 end
 
+class ResultStats < JComponent
+  include GridBag
+
+  def initialize
+    super
+    initGridBag
+    setBorder(TitledBorder.new("Stats"))
+  end
+
+  def update_results(log_output)
+    remove_all
+    md = log_output.match(/n50 of (\d+), max (\d+), total (\d+)/)
+    return if !md
+
+    add_gb label("Total BP ")
+    add_gb value(md[3]), :gridwidth => :remainder
+    add_gb label("Max contig ")
+    add_gb value(md[2]), :gridwidth => :remainder
+    add_gb label("N50 ")
+    add_gb value(md[1]), :gridwidth => :remainder
+    setMaximumSize getPreferredSize
+  end
+
+  def label(msg)
+    lbl = JLabel.new(msg)
+    lbl.font = Font.new(lbl.font.name,Font::BOLD,lbl.font.size)
+    lbl
+  end
+
+  def value(msg)
+    JLabel.new(msg)
+  end
+end
+
 class VelvetResultsComp < JComponent
   def initialize
     super
@@ -45,14 +79,21 @@ class VelvetResultsComp < JComponent
 
     @contigs.addListSelectionListener {|e| @sequence.text = @results.contig(@contigs.selected_value) }
 
-    add(@splitPane = JSplitPane.new(1, JScrollPane.new(@contigs), JScrollPane.new(@sequence)))
-    update_results(nil)
+    vbox = Box.createVerticalBox
+    vbox.add(@result_stats = ResultStats.new)
+    vbox.add(JScrollPane.new(@contigs))
+
+    add(@splitPane = JSplitPane.new(1, vbox, JScrollPane.new(@sequence)))
+    update_results(nil, nil)
   end
 
-  def update_results(file)
+  def update_results(file, log_output)
     @results = VelvetResults.new(file)
     @contigs.list_data = @results.contig_names.to_java
     @contigs.selected_index = 0
-    @splitPane.divider_location=0.2
+    @result_stats.update_results(log_output) if log_output
+
+    @splitPane.divider_location=0.4
+    revalidate
   end
 end

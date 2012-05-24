@@ -452,10 +452,10 @@ class VelvetGUI < JFrame
 
     content_pane.add(@tabs = JTabbedPane.new)
 
-    @tabs.addTab("Main", create_main_tab)
+    @tabs.addTab("Setup", create_main_tab)
     @tabs.addTab("Advanced", create_advanced_tab)
     @tabs.addTab("Log",JScrollPane.new(@console = JTextArea.new))
-    @tabs.addTab("Output", @output = VelvetResultsComp.new)
+    @tabs.addTab("Results", @output = VelvetResultsComp.new)
     @console.font = Font.new("Monospaced", Font::PLAIN, 12)
     @console.editable = false
     @console.getCaret().setUpdatePolicy(DefaultCaret::ALWAYS_UPDATE)
@@ -552,6 +552,7 @@ class VelvetGUI < JFrame
       return
     end
 
+    @console.text = ""
     started
     @console.append ">>> RUNNING : #{velveth_command_line.join ' '}\n"
     @runner = Runner.new(velveth_command_line)
@@ -577,7 +578,7 @@ class VelvetGUI < JFrame
       if e.new_value == 0
         @console.append ">>> velvetg successful\n"
         @tabs.selected_index = 3
-        @output.update_results(File.join(@main_opts.out_directory,"contigs.fa"))
+        @output.update_results(File.join(@main_opts.out_directory,"contigs.fa"), @console.text)
       else
         @console.append ">>> velvetg failed\n"
       end
