@@ -37,10 +37,10 @@ class Options
       when 'flag'
           if opt.value=='yes' then "-#{opt.name}" else nil end
       when 'yes|no'
-          if opt.value=='yes' then "-#{opt.name}=yes" else nil end
+          if opt.value=='yes' then ["-#{opt.name}", "yes"] else nil end
       else
-          if opt.value.nil? || opt.value.empty? then nil else "-#{opt.name}=#{opt.value}" end
+          if opt.value.nil? || opt.value.empty? then nil else ["-#{opt.name}", opt.value] end
       end
-    end.compact
+    end.compact.flatten
   end
 end

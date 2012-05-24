@@ -239,6 +239,10 @@ class MainOptions < JComponent
 
     add_gb(JLabel.new("Read Tracking: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
     add_gb(@read_tracking = JCheckBox.new(), :gridwidth=>:remainder, :fill => :none)
+
+    add_gb(JLabel.new("Scaffolding: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
+    add_gb(@scaffolding = JCheckBox.new(), :gridwidth=>:remainder, :fill => :none)
+    @scaffolding.selected = true
   end
 
   def set_custom_vis(combo, tf)
@@ -261,23 +265,27 @@ class MainOptions < JComponent
 
   def cutoff_option
     case @cutoff_combo.selected_item
-    when 'Auto'   ['-cov_cutoff=auto']
-    when 'Custom' ['-cov_cutoff=#{@cutoff_tf.text}']
+    when 'Auto'
+      ['-cov_cutoff', 'auto']
+    when 'Custom'
+      ['-cov_cutoff', @cutoff_tf.text]
     else []
     end
   end
 
   def estcov_option
     case @estcov_combo.selected_item
-    when 'Auto'   ['-exp_cov=auto']
-    when 'Custom' ['-exp_cov=#{@estcov_tf.text}']
+    when 'Auto'
+      ['-exp_cov', 'auto']
+    when 'Custom'
+      ['-exp_cov', @estcov_tf.text]
     else []
     end
   end
 
   def read_tracking_option
     if @read_tracking.selected?
-      ["-read_trkg=yes"]
+      ["-read_trkg", "yes"]
     else
       []
     end
@@ -285,7 +293,15 @@ class MainOptions < JComponent
 
   def min_contig_len_option
     if @min_contig_len_combo.selected_item=="Custom"
-      ["-min_contig_lgth=#{@min_contig_len_tf.text}"]
+      ["-min_contig_lgth", @min_contig_len_tf.text]
+    else
+      []
+    end
+  end
+
+  def scaffolding_option
+    if @scaffolding.selected?
+      ["-scaffolding", "yes"]
     else
       []
     end
@@ -300,7 +316,7 @@ class MainOptions < JComponent
   end
 
   def velvetg_command_line
-    [out_directory] + cutoff_option + estcov_option + read_tracking_option + min_contig_len_option
+    [out_directory] + cutoff_option + estcov_option + read_tracking_option + min_contig_len_option + scaffolding_option
   end
 end
 
@@ -409,7 +425,7 @@ class VelvetGUI < JFrame
   end
 
   def create_advanced_tab
-    hide_options = %w(cov_cutoff read_trkg min_contig_lgth)
+    hide_options = %w(cov_cutoff read_trkg min_contig_lgth scaffolding)
     opts = @velveth.std_options + @velvetg.std_options
     opts = opts.reject {|o| hide_options.include?(o.name) }
     JScrollPane.new(OptionList.new(opts))
@@ -456,18 +472,32 @@ class VelvetGUI < JFrame
 
     @tabs.selected_index = 2
 
+    run_velveth
+  end
+
+  def run_velveth
     velveth_command_line = [@velveth.exe] +
                             @main_opts.velveth_command_line +
                             @filesSelector.to_command_line +
                             @velveth.std_options.to_command_line
-    @console.append ">>> velveth #{velveth_command_line.join ' '}\n"
+    @console.append ">>> #{velveth_command_line.join ' '}\n"
     @runner = Runner.new(velveth_command_line)
-    @runner.add_property_change_listener {|e| @console.append e.new_value}
+    @runner.add_property_change_listener('stdout') {|e| @console.append e.new_value}
+    @runner.add_property_change_listener('done') {|e| @console.append "Done!" ; run_velvetg}
+    @runner.add_property_change_listener('error') {|e| @console.append "ERROR"}
     @runner.start
+  end
 
-    velvetg_command_line = @main_opts.velvetg_command_line +
+  def run_velvetg
+    velvetg_command_line = [@velvetg.exe] +
+                            @main_opts.velvetg_command_line +
                             @velvetg.std_options.to_command_line
-    @console.append ">>> velvetg #{velvetg_command_line.join ' '}\n"
+    @console.append ">>> #{velvetg_command_line.join ' '}\n"
+    @runner = Runner.new(velvetg_command_line)
+    @runner.add_property_change_listener('stdout') {|e| @console.append e.new_value}
+    @runner.add_property_change_listener('done') {|e| @console.append "Done!"}
+    @runner.add_property_change_listener('error') {|e| @console.append "ERROR"}
+    @runner.start
   end
 end
 

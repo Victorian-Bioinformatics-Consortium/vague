@@ -29,7 +29,9 @@ class Runner < PropertyChangeSupport
       end
     end
     @ret_val = $?
+    firePropertyChange("done", nil, $?)
   rescue => e
     puts "Failed to run : #{e}"
+    firePropertyChange("error", nil, e)
   end
 end
