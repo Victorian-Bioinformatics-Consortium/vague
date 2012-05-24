@@ -10,6 +10,7 @@ include_class %w(java.awt.event.ActionListener
                  java.awt.GridBagConstraints
                  java.awt.Dimension
                  java.awt.Color
+                 java.awt.Font
                  java.lang.System
                  java.util.prefs.Preferences
                  javax.swing.JOptionPane
@@ -30,6 +31,7 @@ include_class %w(java.awt.event.ActionListener
                  javax.swing.JScrollPane
                  javax.swing.JTabbedPane
                  javax.swing.border.TitledBorder
+                 javax.swing.text.DefaultCaret
                 )
 
 class Settings
@@ -90,6 +92,7 @@ class FileSelector < JComponent
 
     add_gb(addFilesBtn = JButton.new("Add another file"), :fill => :none, :gridwidth => :remainder)
     addFilesBtn.add_action_listener {|e| add_file_widget}
+    #addFilesBtn.setFont(Font.new("sansserif",Font::PLAIN,10))
 
     update_boxes
   end
@@ -237,6 +240,7 @@ class OptionList < JComponent
     case opt.type
     when 'yes|no', 'flag'
       w = JCheckBox.new
+      w.selected = opt.value == 'yes'
       w.setToolTipText opt.desc
       w.add_change_listener {|e| w.selected? ? opt.value='yes' : opt.value='no'}
     else
@@ -472,8 +476,9 @@ class VelvetGUI < JFrame
 
     @tabs.addTab("Main", create_main_tab)
     @tabs.addTab("Advanced", create_advanced_tab)
-    @tabs.addTab("Log Output",JScrollPane.new(@console = JTextArea.new))
+    @tabs.addTab("Log",JScrollPane.new(@console = JTextArea.new))
     @console.editable = false
+    @console.getCaret().setUpdatePolicy(DefaultCaret::ALWAYS_UPDATE)
 
     #pack
     setSize 500, 600
@@ -481,8 +486,11 @@ class VelvetGUI < JFrame
 
   def create_advanced_tab
     hide_options = %w(cov_cutoff read_trkg min_contig_lgth scaffolding)
+    defaults = {'clean' => 'yes'}
     opts = @velveth.std_options + @velvetg.std_options
     opts = opts.reject {|o| hide_options.include?(o.name) }
+    opts = opts.reject {|o| o.name.include?('*') }
+    opts.each {|o| o.value = defaults[o.name] if defaults[o.name] }
     JScrollPane.new(OptionList.new(opts))
   end
 
