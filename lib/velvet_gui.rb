@@ -3,6 +3,7 @@ require 'gridbag'
 require 'velvet_binary'
 require 'guess_fasta_type'
 require 'runner'
+require 'velvet_results'
 
 include_class %w(java.awt.event.ActionListener
                  java.awt.BorderLayout
@@ -291,13 +292,6 @@ class MainOptions < JComponent
     @min_contig_len_tf.text = 500.to_s
     @hash_length.add_action_listener {|e| update_auto_contig_length }
     update_auto_contig_length
-
-    add_gb(JLabel.new("Read Tracking: "))
-    add_gb(@read_tracking = JCheckBox.new(), :gridwidth=>:remainder, :fill => :none)
-
-    add_gb(JLabel.new("Scaffolding: "))
-    add_gb(@scaffolding = JCheckBox.new(), :gridwidth=>:remainder, :fill => :none)
-    @scaffolding.selected = true
   end
 
   def set_custom_vis(combo, tf)
@@ -338,25 +332,9 @@ class MainOptions < JComponent
     end
   end
 
-  def read_tracking_option
-    if @read_tracking.selected?
-      ["-read_trkg", "yes"]
-    else
-      []
-    end
-  end
-
   def min_contig_len_option
     if @min_contig_len_combo.selected_item=="Custom"
       ["-min_contig_lgth", @min_contig_len_tf.text]
-    else
-      []
-    end
-  end
-
-  def scaffolding_option
-    if @scaffolding.selected?
-      ["-scaffolding", "yes"]
     else
       []
     end
@@ -371,7 +349,7 @@ class MainOptions < JComponent
   end
 
   def velvetg_command_line
-    [out_directory] + cutoff_option + estcov_option + read_tracking_option + min_contig_len_option + scaffolding_option
+    [out_directory] + cutoff_option + estcov_option + min_contig_len_option
   end
 end
 
@@ -395,6 +373,9 @@ class VelvetInfo < JComponent
                                      "#{found_msg} velvet in system PATH"
                                    end
                                    ))
+    if !@velveth.found
+      @loc_lbl.foreground = Color::red
+    end
 
     hbox.add(Box.createGlue)
     hbox.add(but = JButton.new("Set"))
@@ -402,8 +383,6 @@ class VelvetInfo < JComponent
     if @velveth.path
       hbox.add(but2 = JButton.new("Reset"))
       but2.add_action_listener {|e| firePropertyChange("path", nil, "") }
-    else
-      @loc_lbl.foreground = Color::red
     end
 
     if @velveth.found
@@ -476,6 +455,8 @@ class VelvetGUI < JFrame
     @tabs.addTab("Main", create_main_tab)
     @tabs.addTab("Advanced", create_advanced_tab)
     @tabs.addTab("Log",JScrollPane.new(@console = JTextArea.new))
+    @tabs.addTab("Output", @output = VelvetResultsComp.new)
+    @console.font = Font.new("Monospaced", Font::PLAIN, 12)
     @console.editable = false
     @console.getCaret().setUpdatePolicy(DefaultCaret::ALWAYS_UPDATE)
 
@@ -484,8 +465,8 @@ class VelvetGUI < JFrame
   end
 
   def create_advanced_tab
-    hide_options = %w(cov_cutoff read_trkg min_contig_lgth scaffolding)
-    defaults = {'clean' => 'yes'}
+    hide_options = %w(cov_cutoff min_contig_lgth)
+    defaults = {'clean' => 'yes', 'scaffolding' => 'yes', 'create_binary' => 'yes'}
     opts = @velveth.std_options + @velvetg.std_options
     opts = opts.reject {|o| hide_options.include?(o.name) }
     opts = opts.reject {|o| o.name.include?('*') }
@@ -507,8 +488,8 @@ class VelvetGUI < JFrame
     butBox.add(@addCh = JButton.new("Add library"))
     butBox.add(@delCh = JButton.new("Remove library"))
     butBox.add(Box.createHorizontalGlue)
-    butBox.add(analyzeBut = JButton.new("Analyze"))
-    analyzeBut.add_action_listener {|e| analyze }
+    butBox.add(@analyzeBut = JButton.new("Analyze"))
+    @analyzeBut.add_action_listener {|e| analyze }
     @addCh.add_action_listener {|e| @filesSelector.add_channel ; toggle_add_del }
     @delCh.add_action_listener {|e| @filesSelector.del_channel ; toggle_add_del }
     toggle_add_del
@@ -538,11 +519,40 @@ class VelvetGUI < JFrame
     run_velveth
   end
 
+  def started
+    @analyzeBut.enabled = false
+  end
+
+  def finished
+    @analyzeBut.enabled = true
+  end
+
+  def velveth_command_line
+    [@velveth.exe] +
+      @main_opts.velveth_command_line +
+      @filesSelector.to_command_line +
+      @velveth.std_options.to_command_line
+  end
+
+  def velvetg_command_line
+    [@velvetg.exe] +
+      @main_opts.velvetg_command_line +
+      @velvetg.std_options.to_command_line
+  end
+
+  def show_command_line
+    @console.append "Unable to find velvet.  Command line that would be used:\n"
+    @console.append ">>> RUN : #{velveth_command_line.join ' '}\n"
+    @console.append ">>> RUN : #{velvetg_command_line.join ' '}\n"
+  end
+
   def run_velveth
-    velveth_command_line = [@velveth.exe] +
-                            @main_opts.velveth_command_line +
-                            @filesSelector.to_command_line +
-                            @velveth.std_options.to_command_line
+    if !@velveth.found
+      show_command_line
+      return
+    end
+
+    started
     @console.append ">>> RUNNING : #{velveth_command_line.join ' '}\n"
     @runner = Runner.new(velveth_command_line)
     @runner.add_property_change_listener('stdout') {|e| @console.append e.new_value}
@@ -552,27 +562,28 @@ class VelvetGUI < JFrame
         run_velvetg
       else
         @console.append ">>> velveth failed\n"
+        finished
       end
     end
-    @runner.add_property_change_listener('error') {|e| @console.append "ERROR"}
+    @runner.add_property_change_listener('error') {|e| @console.append "ERROR" ; finished }
     @runner.start
   end
 
   def run_velvetg
-    velvetg_command_line = [@velvetg.exe] +
-                            @main_opts.velvetg_command_line +
-                            @velvetg.std_options.to_command_line
     @console.append ">>> RUNNING : #{velvetg_command_line.join ' '}\n"
     @runner = Runner.new(velvetg_command_line)
     @runner.add_property_change_listener('stdout') {|e| @console.append e.new_value}
     @runner.add_property_change_listener('done') do |e|
       if e.new_value == 0
         @console.append ">>> velvetg successful\n"
+        @tabs.selected_index = 3
+        @output.update_results(File.join(@main_opts.out_directory,"contigs.fa"))
       else
         @console.append ">>> velvetg failed\n"
       end
+      finished
     end
-    @runner.add_property_change_listener('error') {|e| @console.append "ERROR"}
+    @runner.add_property_change_listener('error') {|e| @console.append "ERROR" ; finished}
     @runner.start
   end
 end
