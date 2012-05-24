@@ -51,34 +51,72 @@ class FileSelector < JComponent
   include GridBag
   def initialize(num)
     super()
-    setBorder(TitledBorder.new("Channel #{num} Sequences"))
+    setBorder(TitledBorder.new("Library #{num} Sequences"))
     initGridBag
 
-    add_gb(JLabel.new("Read type: "), :gridwidth => 1, :fill => :horizontal, :anchor => :northwest)
-    add_gb(@typ = JComboBox.new(["single","paired end","mate pair"].to_java), :gridwidth => :remainder, :fill => :none)
-    add_gb(@intLbl = JLabel.new("Interleaved sequence file: "), :gridwidth => 1, :fill => :horizontal)
-    add_gb(@interleaved = JComboBox.new(["interleaved","separate"].to_java), :gridwidth => :remainder, :fill => :none)
+    @typ = JComboBox.new(["single","paired end","mate pair"].to_java)
+    @intLbl = JLabel.new("Interleaved sequence file: ")
+    @interleaved = JComboBox.new(["interleaved","separate"].to_java)
 
-    add_gb(@file1Lbl = JLabel.new("Sequence file: "), :gridwidth => 1, :fill => :horizontal)
-    add_gb(@file1 = JTextField.new, :weightx => 1)
-    add_gb(@file1Btn = JButton.new("..."), :gridwidth => :remainder, :weightx => 0)
+    @files = []
 
-    add_gb(@file2Lbl = JLabel.new("Right Sequence file: "), :gridwidth => 1)
-    add_gb(@file2 = JTextField.new, :weightx => 1)
-    add_gb(@file2Btn = JButton.new("..."), :gridwidth => :remainder, :weightx => 0)
-
-    add_gb(JLabel.new("Format: "), :gridwidth => 1)
-    add_gb(@fmt = JComboBox.new(["fasta","fastq","fasta.gz","fastq.gz"].to_java), :gridwidth => 1, :fill => :none)
+    @fmt = JComboBox.new(["fasta","fastq","fasta.gz","fastq.gz"].to_java)
 
     @typ.add_action_listener {|e| update_boxes }
     @interleaved.add_action_listener {|e| update_boxes }
-    @file1Btn.add_action_listener {|e| select_file(@file1) }
-    @file2Btn.add_action_listener {|e| select_file(@file2) }
+
+    add_file_widget
+  end
+
+  def layout_components
+    remove_all
+    add_gb(JLabel.new("Read type: "))
+    add_gb(@typ, :gridwidth => :remainder, :fill => :none)
+    add_gb(@intLbl)
+    add_gb(@interleaved, :gridwidth => :remainder, :fill => :none)
+
+    @files.each do |file|
+      add_gb(file[:file1Lbl])
+      add_gb(file[:file1], :weightx => 1)
+      add_gb(file[:file1Btn], :gridwidth => :remainder)
+
+      add_gb(file[:file2Lbl])
+      add_gb(file[:file2], :weightx => 1)
+      add_gb(file[:file2Btn], :gridwidth => :remainder)
+    end
+
+    add_gb(JLabel.new("Format: "))
+    add_gb(@fmt, :fill => :none, :gridwidth => :remainder)
+
+    add_gb(addFilesBtn = JButton.new("Add another file"), :fill => :none, :gridwidth => :remainder)
+    addFilesBtn.add_action_listener {|e| add_file_widget}
+
     update_boxes
   end
 
+  def add_file_widget
+    @files << new_file_widget
+    layout_components
+  end
+
+  def new_file_widget
+    file1Lbl = JLabel.new("Sequence file: ")
+    file1 = JTextField.new
+    file1Btn = JButton.new("...")
+
+    file2Lbl = JLabel.new("Right Sequence file: ")
+    file2 = JTextField.new
+    file2Btn = JButton.new("...")
+
+    file1Btn.add_action_listener {|e| select_file(file1) }
+    file2Btn.add_action_listener {|e| select_file(file2) }
+
+    { :file1 => file1, :file1Lbl => file1Lbl, :file1Btn => file1Btn,
+      :file2 => file2, :file2Lbl => file2Lbl, :file2Btn => file2Btn}
+  end
+
   def default_dir(fld)
-    [fld.text, @file1.text, @file2.text].reject(&:empty?).first
+    [fld.text, @files.first[:file1].text, @files.first[:file2].text].reject(&:empty?).first
   end
 
   def select_file(fileField)
@@ -97,8 +135,10 @@ class FileSelector < JComponent
 
   def update_boxes
     @interleaved.visible = @intLbl.visible = (@typ.selected_item != "single")
-    @file2Lbl.visible = @file2.visible = @file2Btn.visible = separate_files
-    @file1Lbl.text = @file2Lbl.visible? ? "Left Sequence file: " : "Sequence file: "
+    @files.each do |file|
+      file[:file2Lbl].visible = file[:file2].visible = file[:file2Btn].visible = separate_files
+      file[:file1Lbl].text = separate_files ? "Left Sequence file: " : "Sequence file: "
+    end
     revalidate
   end
 
@@ -115,14 +155,26 @@ class FileSelector < JComponent
 
   def to_command_line(n)
     if separate_files
-      ["-separate","-"+@fmt.selected_item, "-#{read_type}#{n}", @file1.text, @file2.text]
+      ret = ["-separate","-"+@fmt.selected_item, "-#{read_type}#{n}"]
+      @files.each do |file|
+        ret.concat [file[:file1].text, file[:file2].text]
+      end
+      ret
     else
-      ["-interleaved","-"+@fmt.selected_item, "-#{read_type}#{n}", @file1.text]
+      ret = ["-interleaved","-"+@fmt.selected_item, "-#{read_type}#{n}"]
+      @files.each do |file|
+        ret.concat [file[:file1].text]
+      end
+      ret
     end
   end
 
   def valid_files
-    File.exists?(@file1.text)
+    File.exists?(@files.first[:file1].text)
+  end
+
+  def set_file(file)
+    @files.first[:file1].text = file
   end
 end
 
@@ -206,30 +258,30 @@ class MainOptions < JComponent
     initGridBag
     setBorder(TitledBorder.new("Main Options"))
 
-    add_gb(JLabel.new("Output Directory: "), :gridwidth => 1, :fill => :horizontal, :anchor => :northwest, :weightx=>0)
+    add_gb(JLabel.new("Output Directory: "))
     add_gb(@file1 = JTextField.new, :weightx => 1, :gridwidth=>2)
-    add_gb(file1Btn = JButton.new("..."), :gridwidth => :remainder, :weightx => 0)
+    add_gb(file1Btn = JButton.new("..."), :gridwidth => :remainder)
     file1Btn.add_action_listener {|e| select_file(@file1) }
 
-    add_gb(JLabel.new("Hash Length: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
+    add_gb(JLabel.new("Hash Length: "))
     add_gb(@hash_length = JComboBox.new((5..@max_kmer).step(2).to_a.to_java), :gridwidth=>:remainder, :weightx=>0, :fill => :none)
     @hash_length.selected_item = @default_kmer
 
-    add_gb(JLabel.new("Coverage Cutoff: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
+    add_gb(JLabel.new("Coverage Cutoff: "))
     add_gb(@cutoff_combo = JComboBox.new(["Auto","Custom","Don't use"].to_java), :fill => :none)
-    add_gb(@cutoff_tf = JTextField.new(), :gridwidth=>:remainder, :weightx=>1, :fill => :horizontal)
+    add_gb(@cutoff_tf = JTextField.new(), :gridwidth => :remainder)
 
-    add_gb(JLabel.new("Expected Coverage: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
+    add_gb(JLabel.new("Expected Coverage: "))
     add_gb(@estcov_combo = JComboBox.new(["Auto","Custom", "Don't use"].to_java), :fill => :none)
-    add_gb(@estcov_tf = JTextField.new(), :gridwidth=>:remainder, :weightx=>1, :fill => :horizontal)
+    add_gb(@estcov_tf = JTextField.new(), :gridwidth=>:remainder)
     @cutoff_combo.add_action_listener {|e| set_custom_vis(@cutoff_combo, @cutoff_tf) }
     @estcov_combo.add_action_listener {|e| set_custom_vis(@estcov_combo, @estcov_tf) }
     set_custom_vis(@cutoff_combo, @cutoff_tf)
     set_custom_vis(@estcov_combo, @estcov_tf)
 
-    add_gb(JLabel.new("Min. contig length: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
+    add_gb(JLabel.new("Min. contig length: "))
     add_gb(@min_contig_len_combo = JComboBox.new(["Auto","Custom"].to_java), :fill => :none)
-    add_gb(@min_contig_len_tf = JTextField.new(), :gridwidth=>:remainder, :weightx=>1, :fill => :horizontal)
+    add_gb(@min_contig_len_tf = JTextField.new(), :gridwidth=>:remainder)
     @min_contig_len_combo.add_action_listener {|e| set_custom_vis(@min_contig_len_combo, @min_contig_len_tf) }
     set_custom_vis(@min_contig_len_combo, @min_contig_len_tf)
     @min_contig_len_combo.selected_item = 'Custom'
@@ -237,10 +289,10 @@ class MainOptions < JComponent
     @hash_length.add_action_listener {|e| update_auto_contig_length }
     update_auto_contig_length
 
-    add_gb(JLabel.new("Read Tracking: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
+    add_gb(JLabel.new("Read Tracking: "))
     add_gb(@read_tracking = JCheckBox.new(), :gridwidth=>:remainder, :fill => :none)
 
-    add_gb(JLabel.new("Scaffolding: "), :gridwidth => 1, :fill => :horizontal, :weightx=>0)
+    add_gb(JLabel.new("Scaffolding: "))
     add_gb(@scaffolding = JCheckBox.new(), :gridwidth=>:remainder, :fill => :none)
     @scaffolding.selected = true
   end
@@ -354,6 +406,9 @@ class VelvetInfo < JComponent
     if @velveth.found
       vbox.add(lbl=JLabel.new("Velvet version : "+ @velveth.version))
       lbl.alignment_x = Box::LEFT_ALIGNMENT
+
+      vbox.add(lbl=JLabel.new("Max hash length : "+ @velveth.comp_options['MAXKMERLENGTH']))
+      lbl.alignment_x = Box::LEFT_ALIGNMENT
     end
 
     setMaximumSize Dimension.new(getMaximumSize.width, getPreferredSize.height)
@@ -384,7 +439,7 @@ class VelvetGUI < JFrame
     # HACK for testing!
     if ARGV.length > 0
       @main_opts.instance_variable_get('@file1').send('text=', ARGV[0])
-      @filesSelector.instance_variable_get('@selectors').first.instance_variable_get('@file1').send('text=', ARGV[1])
+      @filesSelector.instance_variable_get('@selectors').first.set_file(ARGV[1])
     end
   end
 
@@ -442,8 +497,9 @@ class VelvetGUI < JFrame
     vbox.add(@filesSelector = FilesSelector.new)
 
     vbox.add(butBox = Box.createHorizontalBox)
-    butBox.add(@addCh = JButton.new("Add channel"))
-    butBox.add(@delCh = JButton.new("Remove channel"))
+    butBox.add(@addCh = JButton.new("Add library"))
+    butBox.add(@delCh = JButton.new("Remove library"))
+    butBox.add(Box.createHorizontalGlue)
     butBox.add(analyzeBut = JButton.new("Analyze"))
     analyzeBut.add_action_listener {|e| analyze }
     @addCh.add_action_listener {|e| @filesSelector.add_channel ; toggle_add_del }
