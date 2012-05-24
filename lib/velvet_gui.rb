@@ -46,7 +46,6 @@ class Settings
   def self.velvet_directory=(str)
     prefs.put("velvet_directory", str)
   end
-
 end
 
 class FileSelector < JComponent
@@ -389,7 +388,7 @@ class VelvetInfo < JComponent
     vbox.add(hbox = Box.createHorizontalBox)
     hbox.alignment_x = Box::LEFT_ALIGNMENT
 
-    found_msg = if @velveth.path then "Using" else "Unable to find" end
+    found_msg = if @velveth.found then "Using" else "Unable to find" end
     hbox.add(@loc_lbl = JLabel.new(if @velveth.path
                                      "#{found_msg} velvet in : #{@velveth.path}"
                                    else
