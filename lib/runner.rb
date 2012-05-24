@@ -30,11 +30,12 @@ class Runner < PropertyChangeSupport
     while line = out.gets   # read the next line from stderr
       firePropertyChange("stdout", nil, line)
     end
+    p.waitFor
     out.close
     @ret_val = p.exitValue
     firePropertyChange("done", nil, @ret_val)
   rescue => e
-    puts "Failed to run : #{e}"
+    puts "Failed to run : #{e}\n#{e.backtrace.join("\n")}"
     firePropertyChange("error", nil, e)
   end
 end
