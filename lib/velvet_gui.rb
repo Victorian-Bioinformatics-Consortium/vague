@@ -256,7 +256,8 @@ class MainOptions < JComponent
   include GridBag
   def initialize(max_kmer)
     super()
-    @max_kmer = max_kmer.to_i || 31
+    @max_kmer = max_kmer.to_i
+    @max_kmer = 31 if @max_kmer < 5
     @default_kmer = 31
 
     initGridBag
@@ -364,7 +365,7 @@ class VelvetInfo < JComponent
     add(vbox = Box.createVerticalBox)
 
     vbox.add(hbox = Box.createHorizontalBox)
-    hbox.alignment_x = Box::LEFT_ALIGNMENT
+    hbox.setAlignmentX(Box::LEFT_ALIGNMENT)
 
     found_msg = if @velveth.found then "Using" else "Unable to find" end
     hbox.add(@loc_lbl = JLabel.new(if @velveth.path
@@ -387,10 +388,10 @@ class VelvetInfo < JComponent
 
     if @velveth.found
       vbox.add(lbl=JLabel.new("Velvet version : "+ @velveth.version))
-      lbl.alignment_x = Box::LEFT_ALIGNMENT
+      lbl.setAlignmentX(Box::LEFT_ALIGNMENT)
 
       vbox.add(lbl=JLabel.new("Max hash length : "+ @velveth.comp_options['MAXKMERLENGTH']))
-      lbl.alignment_x = Box::LEFT_ALIGNMENT
+      lbl.setAlignmentX(Box::LEFT_ALIGNMENT)
     end
 
     setMaximumSize Dimension.new(getMaximumSize.width, getPreferredSize.height)

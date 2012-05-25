@@ -46,12 +46,13 @@ class ResultStats < JComponent
     return if !md
 
     add_gb label("Total BP ")
-    add_gb value(md[3]), :gridwidth => :remainder
+    add_gb value(md[3]), :gridwidth => :remainder, :weightx =>1
     add_gb label("Max contig ")
     add_gb value(md[2]), :gridwidth => :remainder
     add_gb label("N50 ")
     add_gb value(md[1]), :gridwidth => :remainder
-    setMaximumSize getPreferredSize
+
+    setMaximumSize Dimension.new(getMaximumSize.width, getPreferredSize.height)
   end
 
   def label(msg)
