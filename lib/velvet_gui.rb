@@ -228,7 +228,7 @@ class OptionList < JComponent
     setBorder(TitledBorder.new("Advanced Options"))
 
     options.each do |opt|
-      add_gb(l = JLabel.new(opt.name), :gridwidth=>1, :weightx=>0, :fill => :horizontal)
+      add_gb(l = JLabel.new(opt.name))
       l.setToolTipText opt.desc
 
       add_gb(tf = create_editor(opt), :gridwidth=>:remainder, :weightx=>1, :fill => :horizontal)
@@ -355,43 +355,39 @@ class MainOptions < JComponent
 end
 
 class VelvetInfo < JComponent
+  include GridBag
   def initialize(velvetg, velveth)
     super()
     @velvetg = velvetg
     @velveth = velveth
 
     setBorder(TitledBorder.new("Info"))
-    setLayout BorderLayout.new
-    add(vbox = Box.createVerticalBox)
-
-    vbox.add(hbox = Box.createHorizontalBox)
-    hbox.setAlignmentX(Box::LEFT_ALIGNMENT)
+    initGridBag
 
     found_msg = if @velveth.found then "Using" else "Unable to find" end
-    hbox.add(@loc_lbl = JLabel.new(if @velveth.path
-                                     "#{found_msg} velvet in : #{@velveth.path}"
-                                   else
-                                     "#{found_msg} velvet in system PATH"
-                                   end
-                                   ))
+    @loc_lbl = JLabel.new(if @velveth.path
+                            "#{found_msg} velvet in : #{@velveth.path}"
+                          else
+                            "#{found_msg} velvet in system PATH"
+                          end
+                          )
     if !@velveth.found
       @loc_lbl.foreground = Color::red
     end
+    add_gb(@loc_lbl, :gridwidth => 2, :weightx => 1)
 
-    hbox.add(Box.createGlue)
-    hbox.add(but = JButton.new("Set"))
+    add_gb(but = JButton.new("Set"))
     but.add_action_listener {|e| select_velvet_dir }
-    if @velveth.path
-      hbox.add(but2 = JButton.new("Reset"))
-      but2.add_action_listener {|e| firePropertyChange("path", nil, "") }
-    end
+    add_gb(but2 = JButton.new("Reset"), :gridwidth => :remainder)
+    but2.add_action_listener {|e| firePropertyChange("path", nil, "") }
+    but2.visible = !@velveth.path.nil?
 
     if @velveth.found
-      vbox.add(lbl=JLabel.new("Velvet version : "+ @velveth.version))
-      lbl.setAlignmentX(Box::LEFT_ALIGNMENT)
+      add_gb(label("Velvet version : "))
+      add_gb(value(@velveth.version), :gridwidth => :remainder, :weightx => 1)
 
-      vbox.add(lbl=JLabel.new("Max hash length : "+ @velveth.comp_options['MAXKMERLENGTH']))
-      lbl.setAlignmentX(Box::LEFT_ALIGNMENT)
+      add_gb(label("Max hash length : "))
+      add_gb(value(@velveth.comp_options['MAXKMERLENGTH']), :gridwidth => :remainder, :weightx =>1)
     end
 
     setMaximumSize Dimension.new(getMaximumSize.width, getPreferredSize.height)

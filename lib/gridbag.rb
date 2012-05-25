@@ -18,4 +18,14 @@ module GridBag
     @gridbag.setConstraints(w, constraints)
     add w
   end
+
+  def label(msg)
+    lbl = JLabel.new(msg)
+    lbl.font = Font.new(lbl.font.name,Font::BOLD,lbl.font.size)
+    lbl
+  end
+
+  def value(msg)
+    JLabel.new(msg)
+  end
 end
