@@ -484,7 +484,8 @@ class VelvetGUI < JFrame
 
     vbox.add(hbox = Box.createHorizontalBox)
     hbox.add Box.createHorizontalGlue
-    hbox.add(logo = JLabel.new(ImageIcon.new("images/vague.png")))
+    img = java_class.resource("/vague/images/vague.png") || java_class.resource("/images/vague.png")
+    hbox.add(logo = JLabel.new(ImageIcon.new(img)))
     hbox.add Box.createHorizontalGlue
 
     vbox.add(@main_opts  = MainOptions.new(@velveth.comp_options['MAXKMERLENGTH']))
