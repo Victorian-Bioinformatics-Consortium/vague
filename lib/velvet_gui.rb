@@ -14,6 +14,7 @@ include_class %w(java.awt.event.ActionListener
                  java.awt.Font
                  java.lang.System
                  java.util.prefs.Preferences
+                 javax.imageio.ImageIO
                  javax.swing.JOptionPane
                  javax.swing.SwingUtilities
                  javax.swing.JButton
@@ -462,22 +463,29 @@ class VelvetGUI < JFrame
   end
 
   def create_advanced_tab
+    vbox = Box.createVerticalBox
+    vbox.add(@info = VelvetInfo.new(@velveth, @velvetg))
+    @info.add_property_change_listener("path") {|e| update_velvet_path(e.new_value) }
+
     hide_options = %w(cov_cutoff min_contig_lgth)
     defaults = {'clean' => 'yes', 'scaffolding' => 'yes', 'create_binary' => 'yes'}
     opts = @velveth.std_options + @velvetg.std_options
     opts = opts.reject {|o| hide_options.include?(o.name) }
     opts = opts.reject {|o| o.name.include?('*') }
     opts.each {|o| o.value = defaults[o.name] if defaults[o.name] }
-    JScrollPane.new(OptionList.new(opts))
+    vbox.add(JScrollPane.new(OptionList.new(opts)))
+    vbox
   end
 
   def create_main_tab
     vbox = Box.createVerticalBox
-    vbox.add(@info = VelvetInfo.new(@velveth, @velvetg))
-    @info.add_property_change_listener("path") {|e| update_velvet_path(e.new_value) }
 
     vbox.add(hbox = Box.createHorizontalBox)
-    hbox.add(@main_opts  = MainOptions.new(@velveth.comp_options['MAXKMERLENGTH']))
+    hbox.add Box.createHorizontalGlue
+    hbox.add(logo = JLabel.new(ImageIcon.new("images/vague.png")))
+    hbox.add Box.createHorizontalGlue
+
+    vbox.add(@main_opts  = MainOptions.new(@velveth.comp_options['MAXKMERLENGTH']))
 
     vbox.add(@filesSelector = FilesSelector.new)
 
