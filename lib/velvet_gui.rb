@@ -232,7 +232,7 @@ class OptionList < JComponent
       add_gb(l = JLabel.new(opt.name))
       l.setToolTipText opt.desc
 
-      add_gb(tf = create_editor(opt), :gridwidth=>:remainder, :weightx=>1, :fill => :horizontal)
+      add_gb(tf = create_editor(opt), :gridwidth=>:remainder, :weightx=>1, :fill => :none)
     end
   end
 
@@ -245,7 +245,7 @@ class OptionList < JComponent
       w.setToolTipText opt.desc
       w.add_change_listener {|e| w.selected? ? opt.value='yes' : opt.value='no'}
     else
-      w = JTextField.new(opt.value)
+      w = JTextField.new(opt.value, 8)
       w.setToolTipText opt.desc
       w.get_document.add_document_listener {|e| opt.value = w.getText}
     end
@@ -262,7 +262,7 @@ class MainOptions < JComponent
     @default_kmer = 31
 
     initGridBag
-    setBorder(TitledBorder.new("Main Options"))
+    setBorder(TitledBorder.new("Options"))
 
     add_gb(JLabel.new("Output Directory: "))
     add_gb(@file1 = JTextField.new, :weightx => 1, :gridwidth=>2)
@@ -275,11 +275,11 @@ class MainOptions < JComponent
 
     add_gb(JLabel.new("Coverage Cutoff: "))
     add_gb(@cutoff_combo = JComboBox.new(["Auto","Custom","Don't use"].to_java), :fill => :none)
-    add_gb(@cutoff_tf = JTextField.new(), :gridwidth => :remainder)
+    add_gb(@cutoff_tf = JTextField.new(5), :gridwidth => :remainder, :fill => :none)
 
     add_gb(JLabel.new("Expected Coverage: "))
     add_gb(@estcov_combo = JComboBox.new(["Auto","Custom", "Don't use"].to_java), :fill => :none)
-    add_gb(@estcov_tf = JTextField.new(), :gridwidth=>:remainder)
+    add_gb(@estcov_tf = JTextField.new(5), :gridwidth=>:remainder, :fill => :none)
     @cutoff_combo.add_action_listener {|e| set_custom_vis(@cutoff_combo, @cutoff_tf) }
     @estcov_combo.add_action_listener {|e| set_custom_vis(@estcov_combo, @estcov_tf) }
     set_custom_vis(@cutoff_combo, @cutoff_tf)
@@ -287,7 +287,7 @@ class MainOptions < JComponent
 
     add_gb(JLabel.new("Min. contig length: "))
     add_gb(@min_contig_len_combo = JComboBox.new(["Auto","Custom"].to_java), :fill => :none)
-    add_gb(@min_contig_len_tf = JTextField.new(), :gridwidth=>:remainder)
+    add_gb(@min_contig_len_tf = JTextField.new(5), :gridwidth=>:remainder, :fill => :none)
     @min_contig_len_combo.add_action_listener {|e| set_custom_vis(@min_contig_len_combo, @min_contig_len_tf) }
     set_custom_vis(@min_contig_len_combo, @min_contig_len_tf)
     @min_contig_len_combo.selected_item = 'Custom'
@@ -379,9 +379,11 @@ class VelvetInfo < JComponent
 
     add_gb(but = JButton.new("Set"))
     but.add_action_listener {|e| select_velvet_dir }
-    add_gb(but2 = JButton.new("Reset"), :gridwidth => :remainder)
+    add_gb(but2 = JButton.new("Reset"))
     but2.add_action_listener {|e| firePropertyChange("path", nil, "") }
     but2.visible = !@velveth.path.nil?
+    add_gb(JLabel.new, :gridwidth => :remainder)     # End of row filler
+
 
     if @velveth.found
       add_gb(label("Velvet version : "))
