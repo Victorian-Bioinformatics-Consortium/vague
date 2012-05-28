@@ -418,6 +418,8 @@ class VelvetGUI < JFrame
     query_velvet
     create_components
 
+    check_velvet_exists
+
     # HACK for testing!
     if ARGV.length > 0
       @main_opts.instance_variable_get('@file1').send('text=', ARGV[0])
@@ -435,6 +437,14 @@ class VelvetGUI < JFrame
     if @velveth.version != @velvetg.version
       JOptionPane.showMessageDialog(self, "Using different versions of velvetg/velveth", "version mismatch",
                                     JOptionPane::WARNING_MESSAGE)
+    end
+  end
+
+  def check_velvet_exists
+    if !@velveth.found
+      JOptionPane.showMessageDialog(self, "Unable to find velvet binaries.  Please specify the path to velvet",
+                                    "velvet missing", JOptionPane::WARNING_MESSAGE)
+      @info.select_velvet_dir
     end
   end
 
