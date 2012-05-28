@@ -390,8 +390,8 @@ class VelvetInfo < JComponent
       add_gb(label("Velvet version : "))
       add_gb(value(@velveth.version), :gridwidth => :remainder, :weightx => 1)
 
-      add_gb(label("Max hash length : "))
-      add_gb(value(@velveth.comp_options['MAXKMERLENGTH']), :gridwidth => :remainder, :weightx =>1)
+      add_gb(label("Max k-mer size : "))
+      add_gb(value(@velveth.max_kmer.to_s), :gridwidth => :remainder, :weightx =>1)
     end
 
     setMaximumSize Dimension.new(getMaximumSize.width, getPreferredSize.height)
@@ -414,10 +414,7 @@ class VelvetGUI < JFrame
     System.setProperty("swing.aatext", "true")
 
     path = Settings.velvet_directory
-    @velveth=VelvetBinary.new(path,"velveth")
-    @velvetg=VelvetBinary.new(path,"velvetg")
-    query_velvet
-    create_components
+    update_velvet_binary(path)
 
     check_velvet_exists
 
@@ -432,7 +429,7 @@ class VelvetGUI < JFrame
     # Make velveth options into "flags" which is how the binary expects them
     @velveth.std_options.each {|opt| opt.type='flag' if opt.type.nil? }
 
-    @max_channels = @velveth.comp_options["CATEGORIES"].to_i || 1
+    @max_channels = @velveth.max_categories || 1
 
 
     if @velveth.version != @velvetg.version
@@ -449,13 +446,23 @@ class VelvetGUI < JFrame
     end
   end
 
-  def update_velvet_path(path)
-    Settings.velvet_directory = path
+  def update_velvet_binary(path)
     @velveth=VelvetBinary.new(path,"velveth")
     @velvetg=VelvetBinary.new(path,"velvetg")
+
+    # Expand command line params as necessary
+    @velvetg.std_options.expand_opts!("ins_length2", "2", (1..@velveth.max_categories).to_a)
+    @velvetg.std_options.expand_opts!("ins_length*_sd", "*", (1..@velveth.max_categories).to_a + ['_long'])
+    @velvetg.std_options.expand_opts!("shortMatePaired*", "*", (1..@velveth.max_categories).to_a)
+
     content_pane.removeAll
     query_velvet
     create_components
+  end
+
+  def set_velvet_path(path)
+    Settings.velvet_directory = path
+    update_velvet_binary(path)
   end
 
   def create_components
@@ -478,14 +485,14 @@ class VelvetGUI < JFrame
   def create_advanced_tab
     vbox = Box.createVerticalBox
     vbox.add(@info = VelvetInfo.new(@velveth, @velvetg))
-    @info.add_property_change_listener("path") {|e| update_velvet_path(e.new_value) }
+    @info.add_property_change_listener("path") {|e| set_velvet_path(e.new_value) }
 
-    hide_options = %w(cov_cutoff min_contig_lgth)
+    hide_options = %w(cov_cutoff min_contig_lgth ins_length)
     defaults = {'clean' => 'yes', 'scaffolding' => 'yes', 'create_binary' => 'yes'}
     opts = @velveth.std_options + @velvetg.std_options
-    opts = opts.reject {|o| hide_options.include?(o.name) }
-    opts = opts.reject {|o| o.name.include?('*') }
-    opts.each {|o| o.value = defaults[o.name] if defaults[o.name] }
+    opts.hide!(hide_options)
+    opts.set_defaults!(defaults)
+
     vbox.add(JScrollPane.new(OptionList.new(opts)))
     vbox
   end
@@ -499,7 +506,7 @@ class VelvetGUI < JFrame
     hbox.add(logo = JLabel.new(ImageIcon.new(img)))
     hbox.add Box.createHorizontalGlue
 
-    vbox.add(@main_opts  = MainOptions.new(@velveth.comp_options['MAXKMERLENGTH']))
+    vbox.add(@main_opts  = MainOptions.new(@velveth.max_kmer))
 
     vbox.add(sc=JScrollPane.new(@filesSelector = FilesSelector.new))
     sc.getViewport.setOpaque(false)
