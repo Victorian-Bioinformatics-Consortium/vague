@@ -86,6 +86,7 @@ class FileSelector < JComponent
       add_gb(file[:file2Lbl])
       add_gb(file[:file2], :weightx => 1)
       add_gb(file[:file2Btn], :gridwidth => :remainder)
+      add_gb(Box.createVerticalStrut(10), :gridwidth => :remainder)
     end
 
     add_gb(JLabel.new("Format: "))
@@ -269,7 +270,7 @@ class MainOptions < JComponent
     add_gb(file1Btn = JButton.new("..."), :gridwidth => :remainder)
     file1Btn.add_action_listener {|e| select_file(@file1) }
 
-    add_gb(JLabel.new("Hash Length: "))
+    add_gb(JLabel.new("K-mer size: "))
     add_gb(@hash_length = JComboBox.new((5..@max_kmer).step(2).to_a.to_java), :gridwidth=>:remainder, :weightx=>0, :fill => :none)
     @hash_length.selected_item = @default_kmer
 
@@ -500,7 +501,10 @@ class VelvetGUI < JFrame
 
     vbox.add(@main_opts  = MainOptions.new(@velveth.comp_options['MAXKMERLENGTH']))
 
-    vbox.add(@filesSelector = FilesSelector.new)
+    vbox.add(sc=JScrollPane.new(@filesSelector = FilesSelector.new))
+    sc.getViewport.setOpaque(false)
+    sc.setOpaque(false)
+    sc.border = nil
 
     vbox.add(butBox = Box.createHorizontalBox)
     butBox.add(@addCh = JButton.new("Add library"))
