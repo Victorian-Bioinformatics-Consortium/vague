@@ -4,7 +4,7 @@ module GridBag
   end
 
   def add_gb(w, params={})
-    def_params = { :gridwidth => 1, :anchor => :northwest, :fill => :horizontal, :weightx => 0 }
+    def_params = { :gridwidth => 1, :fill => :horizontal, :weightx => 0, :anchor => GridBagConstraints::BASELINE_LEADING }
 
     constraints = GridBagConstraints.new
     def_params.merge(params).each do |k,v|
