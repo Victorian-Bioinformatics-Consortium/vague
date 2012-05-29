@@ -1,6 +1,11 @@
 module GridBag
   def initGridBag
     setLayout(@gridbag = GridBagLayout.new)
+    @current_tip = nil
+  end
+
+  def gb_set_tip(tip)
+    @current_tip = tip
   end
 
   def add_gb(w, params={})
@@ -17,6 +22,7 @@ module GridBag
     end
     @gridbag.setConstraints(w, constraints)
     add w
+    w.setToolTipText(@current_tip) if @current_tip
   end
 
   def label(msg)

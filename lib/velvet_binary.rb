@@ -35,7 +35,7 @@ class VelvetBinary
   end
 
   def parse_standard_options(str)
-    str.scan(/^\s+-(\S+)(?: <(\S+)>)?\s+: (.*?)$/m) {|k| @std_options.add_option(k[0], k[2], k[1]) }
+    str.scan(/^\s+-(\S+)(?: <(.*?)>)?\s+: (.*?)$/m) {|k| @std_options.add_option(k[0], k[2], k[1]) }
   end
 
   def max_kmer

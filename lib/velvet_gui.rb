@@ -74,12 +74,15 @@ class FileSelector < JComponent
 
   def layout_components
     remove_all
+    gb_set_tip "Specify read type SINGLE, PAIRED END or MATE PAIR"
     add_gb(JLabel.new("Read type: "))
     add_gb(@typ, :gridwidth => :remainder, :fill => :none)
+    gb_set_tip "Specify whether paired reads are interleaved in one file, or in separate files"
     add_gb(@intLbl)
     add_gb(@interleaved, :gridwidth => :remainder, :fill => :none)
 
     @files.each do |file|
+      gb_set_tip "Specify sequence file(s)"
       add_gb(file[:file1Lbl])
       add_gb(file[:file1], :weightx => 1)
       add_gb(file[:file1Btn], :gridwidth => :remainder)
@@ -90,9 +93,11 @@ class FileSelector < JComponent
       add_gb(Box.createVerticalStrut(10), :gridwidth => :remainder)
     end
 
+    gb_set_tip "Force file format to read files"
     add_gb(JLabel.new("Format: "))
     add_gb(@fmt, :fill => :none, :gridwidth => :remainder)
 
+    gb_set_tip "Add another sequence file to this library"
     add_gb(addFilesBtn = JButton.new("Add another file"), :fill => :none, :gridwidth => :remainder)
     addFilesBtn.add_action_listener {|e| add_file_widget}
     #addFilesBtn.setFont(Font.new("sansserif",Font::PLAIN,10))
@@ -257,15 +262,17 @@ end
 
 class MainOptions < JComponent
   include GridBag
-  def initialize(max_kmer)
+  def initialize(max_kmer, option_list)
     super()
     @max_kmer = max_kmer.to_i
     @max_kmer = 31 if @max_kmer < 5
     @default_kmer = 31
+    @option_list = option_list
 
     initGridBag
     setBorder(TitledBorder.new("Options"))
 
+    gb_set_tip 'Set output directory to store results from velvet'
     add_gb(JLabel.new("Output Directory: "))
     add_gb(@file1 = JTextField.new, :weightx => 1, :gridwidth=>2)
     add_gb(file1Btn = JButton.new("..."), :gridwidth => :remainder)
@@ -275,10 +282,12 @@ class MainOptions < JComponent
     add_gb(@hash_length = JComboBox.new((5..@max_kmer).step(2).to_a.to_java), :gridwidth=>:remainder, :weightx=>0, :fill => :none)
     @hash_length.selected_item = @default_kmer
 
+    gb_set_tip get_tip('cov_cutoff')
     add_gb(JLabel.new("Coverage Cutoff: "))
     add_gb(@cutoff_combo = JComboBox.new(["Auto","Custom","Don't use"].to_java), :fill => :none)
     add_gb(@cutoff_tf = JTextField.new(5), :gridwidth => :remainder, :fill => :none)
 
+    gb_set_tip get_tip('exp_cov')
     add_gb(JLabel.new("Expected Coverage: "))
     add_gb(@estcov_combo = JComboBox.new(["Auto","Custom", "Don't use"].to_java), :fill => :none)
     add_gb(@estcov_tf = JTextField.new(5), :gridwidth=>:remainder, :fill => :none)
@@ -287,6 +296,7 @@ class MainOptions < JComponent
     set_custom_vis(@cutoff_combo, @cutoff_tf)
     set_custom_vis(@estcov_combo, @estcov_tf)
 
+    gb_set_tip get_tip('min_contig_lgth')
     add_gb(JLabel.new("Min. contig length: "))
     add_gb(@min_contig_len_combo = JComboBox.new(["Auto","Custom"].to_java), :fill => :none)
     add_gb(@min_contig_len_tf = JTextField.new(5), :gridwidth=>:remainder, :fill => :none)
@@ -296,6 +306,18 @@ class MainOptions < JComponent
     @min_contig_len_tf.text = 500.to_s
     @hash_length.add_action_listener {|e| update_auto_contig_length }
     update_auto_contig_length
+  end
+
+  # Use text from velvet.  Override here if we want to provide better help text for the main options
+  def get_tip(fld)
+    case fld
+    when 'min_contig_lgth'
+      opt = @option_list.get('min_contig_lgth')
+      opt ? opt.desc.sub(/\(.*/,'') : nil
+    else
+      opt = @option_list.get(fld)
+      opt ? opt.desc : nil
+    end
   end
 
   def set_custom_vis(combo, tf)
@@ -470,10 +492,10 @@ class VelvetGUI < JFrame
 
     content_pane.add(@tabs = JTabbedPane.new)
 
-    @tabs.addTab("Setup", create_main_tab)
-    @tabs.addTab("Advanced", create_advanced_tab)
-    @tabs.addTab("Log",JScrollPane.new(@console = JTextArea.new))
-    @tabs.addTab("Results", @output = VelvetResultsComp.new)
+    @tabs.addTab("Setup", nil, create_main_tab, "Setup the main options")
+    @tabs.addTab("Advanced", nil, create_advanced_tab, "Configure advanced options for velvet")
+    @tabs.addTab("Log", nil, JScrollPane.new(@console = JTextArea.new), "Log output from running velvet process")
+    @tabs.addTab("Results", nil, @output = VelvetResultsComp.new, "Summary of results after running velvet")
     @console.font = Font.new("Monospaced", Font::PLAIN, 12)
     @console.editable = false
     @console.getCaret().setUpdatePolicy(DefaultCaret::ALWAYS_UPDATE)
@@ -530,7 +552,7 @@ class VelvetGUI < JFrame
     aboutBut.add_action_listener {|e| show_about }
     helpBut.add_action_listener {|e| show_help }
 
-    vbox.add(@main_opts  = MainOptions.new(@velveth.max_kmer))
+    vbox.add(@main_opts  = MainOptions.new(@velveth.max_kmer, @velveth.std_options + @velvetg.std_options))
 
     vbox.add(sc=JScrollPane.new(@filesSelector = FilesSelector.new))
     sc.getViewport.setOpaque(false)
@@ -546,6 +568,10 @@ class VelvetGUI < JFrame
     @addCh.add_action_listener {|e| @filesSelector.add_channel ; toggle_add_del }
     @delCh.add_action_listener {|e| @filesSelector.del_channel ; toggle_add_del }
     toggle_add_del
+
+    @addCh.setToolTipText "Add another sequence library"
+    @delCh.setToolTipText "Remove last sequence library"
+    @analyzeBut.setToolTipText "Run velvet assembler"
 
     vbox
   end

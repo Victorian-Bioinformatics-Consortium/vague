@@ -22,6 +22,10 @@ class Options
     @opts.each {|o| yield o}
   end
 
+  def get(name)
+    @opts.find {|o| o.name == name}
+  end
+
   def concat(opts)
     @opts.concat(opts.entries)
     self
