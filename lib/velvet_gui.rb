@@ -421,6 +421,8 @@ class VelvetGUI < JFrame
       @main_opts.instance_variable_get('@file1').send('text=', ARGV[0])
       @filesSelector.instance_variable_get('@selectors').first.set_file(ARGV[1])
     end
+
+    setLocationRelativeTo(nil)
   end
 
   def query_velvet

@@ -36,6 +36,10 @@ class VelvetResults
   def min_contig
     @contigs.map {|k,v| v[:len]}.min
   end
+
+  def num_contigs
+    @contigs.size
+  end
 end
 
 class ResultStats < JComponent
@@ -60,6 +64,8 @@ class ResultStats < JComponent
     add_gb value(velvet_results.min_contig.to_s), :gridwidth => :remainder
     add_gb label("N50 ")
     add_gb value(md[1]), :gridwidth => :remainder
+    add_gb label("Num contigs ")
+    add_gb value(velvet_results.num_contigs.to_s), :gridwidth => :remainder
 
     setMaximumSize Dimension.new(getMaximumSize.width, getPreferredSize.height)
   end

@@ -17,7 +17,7 @@ class HelpDialog < JDialog
     vbox.add(JScrollPane.new(txt))
 
     vbox.add(hbox = Box.createHorizontalBox)
-    hbox.add(Box.createHorizontalGlue)
+    #hbox.add(Box.createHorizontalGlue)
     hbox.add(but = JButton.new("Ok"))
     but.add_action_listener {|e| self.setVisible(false) }
 
