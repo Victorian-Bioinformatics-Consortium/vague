@@ -4,6 +4,7 @@ require 'velvet_binary'
 require 'guess_fasta_type'
 require 'runner'
 require 'velvet_results'
+require 'help_dialog'
 
 include_class %w(java.awt.event.ActionListener
                  java.awt.BorderLayout
@@ -497,6 +498,23 @@ class VelvetGUI < JFrame
     vbox
   end
 
+  def show_about
+    str = <<-STR;
+      <html>
+        <h2>Vague - Velvet Assembler Graphical User Environment</h2>
+        Written by <b>David R. Powell</b> (<code>david.powell@monash.edu</code>)
+        <i>Victorian Bioinformatics Consortium</i>
+    STR
+    str.gsub!(/^\s+/,'')
+    str.gsub!(/\n/,'<br>')
+    JOptionPane.showMessageDialog(self, str,
+                                  "Vague about", JOptionPane::INFORMATION_MESSAGE)
+  end
+
+  def show_help
+    HelpDialog.new(self)
+  end
+
   def create_main_tab
     vbox = Box.createVerticalBox
 
@@ -505,6 +523,13 @@ class VelvetGUI < JFrame
     img = java_class.resource("/vague/images/vague.png") || java_class.resource("/images/vague.png")
     hbox.add(logo = JLabel.new(ImageIcon.new(img)))
     hbox.add Box.createHorizontalGlue
+    hbox.add(helpBox = Box.createVerticalBox)
+    helpBox.add(aboutBut = JButton.new("About"))
+    helpBox.add(helpBut = JButton.new("Help"))
+    aboutBut.setFont(Font.new("serif",Font::PLAIN,10))
+    helpBut.setFont(Font.new("serif",Font::PLAIN,10))
+    aboutBut.add_action_listener {|e| show_about }
+    helpBut.add_action_listener {|e| show_help }
 
     vbox.add(@main_opts  = MainOptions.new(@velveth.max_kmer))
 
