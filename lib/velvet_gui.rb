@@ -411,9 +411,6 @@ class VelvetGUI < JFrame
   def initialize
     super "Velvet"
 
-    System.setProperty("awt.useSystemAAFontSettings","on")
-    System.setProperty("swing.aatext", "true")
-
     path = Settings.velvet_directory
     update_velvet_binary(path)
 
