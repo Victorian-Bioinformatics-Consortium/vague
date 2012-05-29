@@ -6,8 +6,8 @@ include_class %w(javax.swing.JDialog
 class HelpDialog < JDialog
   def initialize(parent)
     super(parent, "Vague help", true)
-    help = java_class.resource("/lib/help.html") || java_class.resource("/lib/help.html")
-    str = File.read(help.to_uri.to_s)
+    help = java_class.resource_as_stream("/vague/lib/help.html") || java_class.resource_as_stream("/lib/help.html")
+    str = read_file(help)
 
     vbox = Box.createVerticalBox
 
@@ -28,4 +28,14 @@ class HelpDialog < JDialog
     setLocationRelativeTo(parent)
     setVisible(true)
   end
+
+  def read_file(file)
+    res = ""
+    br = java.io.BufferedReader.new(java.io.InputStreamReader.new(file))
+    while (line = br.read_line())
+      res += line
+    end
+    res
+  end
+
 end
