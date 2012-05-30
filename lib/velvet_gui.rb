@@ -5,6 +5,7 @@ require 'guess_fasta_type'
 require 'runner'
 require 'velvet_results'
 require 'help_dialog'
+require 'estimate_kmer'
 
 include_class %w(java.awt.event.ActionListener
                  java.awt.BorderLayout
@@ -278,9 +279,13 @@ class MainOptions < JComponent
     add_gb(file1Btn = JButton.new("..."), :gridwidth => :remainder)
     file1Btn.add_action_listener {|e| select_file(@file1) }
 
+    gb_set_tip 'Size of k-mer (hash_length) to use for velvet'
     add_gb(JLabel.new("K-mer size: "))
-    add_gb(@hash_length = JComboBox.new((5..@max_kmer).step(2).to_a.to_java), :gridwidth=>:remainder, :weightx=>0, :fill => :none)
+    add_gb(@hash_length = JComboBox.new((5..@max_kmer).step(2).to_a.to_java), :fill => :none)
+    gb_set_tip 'Attempt to estimate the best k-mer size to use'
+    add_gb(est_but = JButton.new("Estimate best k-mer size..."), :gridwidth=>:remainder, :fill => :none)
     @hash_length.selected_item = @default_kmer
+    est_but.add_action_listener {|e| show_estimate_kmer}
 
     gb_set_tip get_tip('cov_cutoff')
     add_gb(JLabel.new("Coverage Cutoff: "))
@@ -318,6 +323,10 @@ class MainOptions < JComponent
       opt = @option_list.get(fld)
       opt ? opt.desc : nil
     end
+  end
+
+  def show_estimate_kmer
+    EstimateKmer.new(self)
   end
 
   def set_custom_vis(combo, tf)
