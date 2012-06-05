@@ -279,7 +279,6 @@ class MainOptions < JComponent
     super()
     @max_kmer = max_kmer.to_i
     @max_kmer = 31 if @max_kmer < 5
-    @default_kmer = 31
     @option_list = option_list
 
     initGridBag
@@ -294,7 +293,7 @@ class MainOptions < JComponent
     gb_set_tip 'Size of k-mer (hash_length) to use for velvet'
     add_gb(JLabel.new("K-mer size: "))
     add_gb(@hash_length = JComboBox.new((5..@max_kmer).step(2).to_a.to_java), :fill => :none, :gridwidth=>:remainder)
-    @hash_length.selected_item = @default_kmer
+    select_kmer(31)
 
     gb_set_tip get_tip('cov_cutoff')
     add_gb(JLabel.new("Coverage Cutoff: "))
@@ -320,6 +319,18 @@ class MainOptions < JComponent
     @min_contig_len_tf.text = 500.to_s
     @hash_length.add_action_listener {|e| update_auto_contig_length }
     update_auto_contig_length
+  end
+
+  def select_kmer(n)
+    n = n.to_i
+    if n > @max_kmer
+      JOptionPane.showMessageDialog(self, "Attempt to use k-mer size '#{n}' larger than maximum (#{@max_kmer}).  You may recompile velvet to increase this maximum", "Invalid k-mer size", JOptionPane::WARNING_MESSAGE)
+      n = @max_kmer
+    elsif n<5
+      n = 5
+    end
+      
+    @hash_length.selected_item = n
   end
 
   # Use text from velvet.  Override here if we want to provide better help text for the main options
@@ -600,7 +611,8 @@ class VelvetGUI < JFrame
       return
     end
 
-    EstimateKmer.new(self, @filesSelector.all_files)
+    est = EstimateKmer.new(self, @filesSelector.all_files)
+    @main_opts.select_kmer(est.result)
   end
 
   def toggle_add_del

@@ -6,6 +6,8 @@ include_class %w(javax.swing.JDialog
                 )
 
 class EstimateKmer < JDialog
+  attr_reader :result
+
   include GridBag
   def initialize(parent, files)
     super(SwingUtilities.windowForComponent(parent), "K-mer estimator", true)
@@ -42,12 +44,13 @@ class EstimateKmer < JDialog
   end
 
   def estimate
-    cmd = ["velvetk.pl","--size=#{@size.text}","--cov=#{@cov.text}", "--best!"] + @files
+    cmd = ["velvetk.pl","--size=#{@size.text}","--cov=#{@cov.text}", "--best"] + @files
     resp = backticks(cmd)
     if $? != 0
       JOptionPane.showMessageDialog(self, "Error running velvetk.pl", "Error",
                                     JOptionPane::ERROR_MESSAGE)
     end
     puts resp
+    @result = resp
   end
 end
