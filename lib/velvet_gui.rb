@@ -59,7 +59,7 @@ class FileSelector < JComponent
     setBorder(TitledBorder.new("Library #{num} Sequences"))
     initGridBag
 
-    @typ = JComboBox.new(["single","paired end","mate pair"].to_java)
+    @typ = JComboBox.new(["single","paired end"].to_java)
     @intLbl = JLabel.new("Interleaved sequence file: ")
     @interleaved = JComboBox.new(["interleaved","separate"].to_java)
 
@@ -75,7 +75,7 @@ class FileSelector < JComponent
 
   def layout_components
     remove_all
-    gb_set_tip "Specify read type SINGLE, PAIRED END or MATE PAIR"
+    gb_set_tip "Specify read type SINGLE or PAIRED END"
     add_gb(JLabel.new("Read type: "))
     add_gb(@typ, :gridwidth => :remainder, :fill => :none)
     gb_set_tip "Specify whether paired reads are interleaved in one file, or in separate files"
@@ -181,6 +181,14 @@ class FileSelector < JComponent
     end
   end
 
+  def all_files
+    if separate_files
+      @files.map {|f| [f[:file1].text, f[:file2].text] }.flatten
+    else
+      @files.map {|f| f[:file1].text }
+    end
+  end
+
   def valid_files
     File.exists?(@files.first[:file1].text)
   end
@@ -218,6 +226,10 @@ class FilesSelector < JComponent
 
   def valid_files
     @selectors.all?(&:valid_files)
+  end
+
+  def all_files
+    @selectors.map(&:all_files).flatten
   end
 
   def to_command_line
@@ -281,11 +293,8 @@ class MainOptions < JComponent
 
     gb_set_tip 'Size of k-mer (hash_length) to use for velvet'
     add_gb(JLabel.new("K-mer size: "))
-    add_gb(@hash_length = JComboBox.new((5..@max_kmer).step(2).to_a.to_java), :fill => :none)
-    gb_set_tip 'Attempt to estimate the best k-mer size to use'
-    add_gb(est_but = JButton.new("Estimate best k-mer size..."), :gridwidth=>:remainder, :fill => :none)
+    add_gb(@hash_length = JComboBox.new((5..@max_kmer).step(2).to_a.to_java), :fill => :none, :gridwidth=>:remainder)
     @hash_length.selected_item = @default_kmer
-    est_but.add_action_listener {|e| show_estimate_kmer}
 
     gb_set_tip get_tip('cov_cutoff')
     add_gb(JLabel.new("Coverage Cutoff: "))
@@ -323,10 +332,6 @@ class MainOptions < JComponent
       opt = @option_list.get(fld)
       opt ? opt.desc : nil
     end
-  end
-
-  def show_estimate_kmer
-    EstimateKmer.new(self)
   end
 
   def set_custom_vis(combo, tf)
@@ -572,8 +577,12 @@ class VelvetGUI < JFrame
     butBox.add(@addCh = JButton.new("Add library"))
     butBox.add(@delCh = JButton.new("Remove library"))
     butBox.add(Box.createHorizontalGlue)
-    butBox.add(@analyzeBut = JButton.new("Analyze"))
+
+    butBox.add(est_but = JButton.new("Estimate best k-mer size..."))
+    butBox.add(@analyzeBut = JButton.new("Run!"))
+
     @analyzeBut.add_action_listener {|e| analyze }
+    est_but.add_action_listener {|e| show_estimate_kmer}
     @addCh.add_action_listener {|e| @filesSelector.add_channel ; toggle_add_del }
     @delCh.add_action_listener {|e| @filesSelector.del_channel ; toggle_add_del }
     toggle_add_del
@@ -583,6 +592,15 @@ class VelvetGUI < JFrame
     @analyzeBut.setToolTipText "Run velvet assembler"
 
     vbox
+  end
+
+  def show_estimate_kmer
+    if !@filesSelector.valid_files
+      JOptionPane.showMessageDialog(self, "Invalid sequence file(s)", "Invalid", JOptionPane::ERROR_MESSAGE)
+      return
+    end
+
+    EstimateKmer.new(self, @filesSelector.all_files)
   end
 
   def toggle_add_del
