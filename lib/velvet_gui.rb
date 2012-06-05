@@ -329,7 +329,7 @@ class MainOptions < JComponent
     elsif n<5
       n = 5
     end
-      
+
     @hash_length.selected_item = n
   end
 
@@ -611,7 +611,7 @@ class VelvetGUI < JFrame
       return
     end
 
-    est = EstimateKmer.new(self, @filesSelector.all_files)
+    est = EstimateKmer.new(self, @velveth.path, @filesSelector.all_files)
     @main_opts.select_kmer(est.result)
   end
 

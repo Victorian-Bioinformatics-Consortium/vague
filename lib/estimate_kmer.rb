@@ -9,9 +9,10 @@ class EstimateKmer < JDialog
   attr_reader :result
 
   include GridBag
-  def initialize(parent, files)
+  def initialize(parent, path, files)
     super(SwingUtilities.windowForComponent(parent), "K-mer estimator", true)
     @files = files
+    @path = path
     initGridBag
 
     add_gb(JLabel.new("Target genome size: "))
@@ -43,8 +44,16 @@ class EstimateKmer < JDialog
     `#{cmd}`
   end
 
+  def exe
+    if @path
+      File.join(@path,"velvetk.pl")
+    else
+      "velvetk.pl"
+    end
+  end
+
   def estimate
-    cmd = ["velvetk.pl","--size=#{@size.text}","--cov=#{@cov.text}", "--best"] + @files
+    cmd = [exe,"--size=#{@size.text}","--cov=#{@cov.text}", "--best"] + @files
     resp = backticks(cmd)
     if $? != 0
       JOptionPane.showMessageDialog(self, "Error running velvetk.pl", "Error",
