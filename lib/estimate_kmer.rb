@@ -3,6 +3,7 @@ require 'shellwords'
 include_class %w(javax.swing.JDialog
                  javax.swing.JEditorPane
                  javax.swing.SwingUtilities
+                 javax.swing.JProgressBar
                 )
 
 class EstimateKmer < JDialog
@@ -26,15 +27,19 @@ class EstimateKmer < JDialog
     add_gb(JLabel.new(@files.length.to_s), :gridwidth => :remainder)
     gb_set_tip(nil)
 
+    add_gb(@progbar = JProgressBar.new, :gridwidth => :remainder)
+    @progbar.visible = false
+
     hbox = Box.createHorizontalBox
     hbox.add(Box.createHorizontalGlue)
-    hbox.add(est_but = JButton.new("Estimate!"))
+    hbox.add(@est_but = JButton.new("Estimate!"))
+    hbox.add(Box.createHorizontalGlue)
     hbox.add(cancel = JButton.new("Cancel"))
     hbox.add(Box.createHorizontalGlue)
-    add_gb(hbox)
+    add_gb(hbox, :gridwidth => :remainder)
 
     cancel.add_action_listener {|e| setVisible(false)}
-    est_but.add_action_listener {|e| estimate ; setVisible(false) }
+    @est_but.add_action_listener {|e| estimate }
 
     pack
     setSize 350,150
@@ -56,14 +61,28 @@ class EstimateKmer < JDialog
     end
   end
 
+  def run_failed
+    JOptionPane.showMessageDialog(self, "Error running velvetk.pl", "Error", JOptionPane::ERROR_MESSAGE)
+    setVisible(false)
+  end
+
   def estimate
+    @progbar.setIndeterminate(true)
+    @progbar.visible = true
+
     cmd = [exe,"--size=#{@size.text}","--cov=#{@cov.text}", "--best"] + @files
-    resp = backticks(cmd)
-    if $? != 0
-      JOptionPane.showMessageDialog(self, "Error running velvetk.pl", "Error",
-                                    JOptionPane::ERROR_MESSAGE)
+
+    @est_but.enabled = false
+    runner = Runner.new(cmd)
+    runner.add_property_change_listener('stdout') {|e| @result = e.new_value}
+    runner.add_property_change_listener('error') {|e| run_failed }
+    runner.add_property_change_listener('done') do |e|
+      if e.new_value == 0
+        setVisible(false)
+      else
+        run_failed
+      end
     end
-    puts resp
-    @result = resp
+    runner.start
   end
 end
