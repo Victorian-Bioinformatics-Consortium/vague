@@ -642,7 +642,7 @@ class VelvetGUI < JFrame
     end
 
     est = EstimateKmer.new(self, @velveth.path, @filesSelector.all_files)
-    @main_opts.select_kmer(est.result)
+    @main_opts.select_kmer(est.result) if est.result
   end
 
   def toggle_add_del
