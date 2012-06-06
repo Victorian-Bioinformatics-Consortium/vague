@@ -15,12 +15,16 @@ class EstimateKmer < JDialog
     @path = path
     initGridBag
 
+    gb_set_tip("Size of target genome (suffixes k,m,g supported).  eg. 300m")
     add_gb(JLabel.new("Target genome size: "))
     add_gb(@size = JTextField.new(8), :gridwidth => :remainder)
+    gb_set_tip("Target k-mer coverage")
     add_gb(JLabel.new("Desired k-mer coverage: "))
     add_gb(@cov = JTextField.new("25"), :gridwidth => :remainder)
+    gb_set_tip("Number of files you have specified")
     add_gb(JLabel.new("Number of read files: "))
     add_gb(JLabel.new(@files.length.to_s), :gridwidth => :remainder)
+    gb_set_tip(nil)
 
     hbox = Box.createHorizontalBox
     hbox.add(Box.createHorizontalGlue)

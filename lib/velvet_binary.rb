@@ -2,7 +2,7 @@ require 'options'
 
 class VelvetBinary
   attr_reader :comp_options, :std_options, :version, :found, :path
-  def initialize(path,binary)
+  def initialize(path, binary)
     @binary = binary
     @path = (path.nil? || path.length==0) ? nil : path
     @comp_options ||= {}

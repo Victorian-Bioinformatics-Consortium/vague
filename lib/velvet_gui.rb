@@ -1,4 +1,5 @@
 require 'java'
+require 'optparse'
 require 'gridbag'
 require 'velvet_binary'
 require 'guess_fasta_type'
@@ -6,6 +7,8 @@ require 'runner'
 require 'velvet_results'
 require 'help_dialog'
 require 'estimate_kmer'
+
+VELVET_REQUIRED_VERSION = '1.2.07'
 
 include_class %w(java.awt.event.ActionListener
                  java.awt.BorderLayout
@@ -65,7 +68,7 @@ class FileSelector < JComponent
 
     @files = []
 
-    @fmt = JComboBox.new(["fasta","fastq","fasta.gz","fastq.gz"].to_java)
+    @fmt = JComboBox.new(["auto","fasta","fastq","fasta.gz","fastq.gz"].to_java)
 
     @typ.add_action_listener {|e| update_boxes }
     @interleaved.add_action_listener {|e| update_boxes }
@@ -136,8 +139,10 @@ class FileSelector < JComponent
     if fc.showOpenDialog(fileField)==0
       file = fc.getSelectedFile.getPath
       fileField.set_text file
-      t = GuessFastaType.guess(file)
-      @fmt.selected_item = t.to_s.sub('_','.')
+
+      # Don't guess type, just use auto
+      #t = GuessFastaType.guess(file)
+      #@fmt.selected_item = t.to_s.sub('_','.')
     end
   end
 
@@ -165,15 +170,23 @@ class FileSelector < JComponent
     end
   end
 
+  def format_command_line
+    if @fmt.selected_item == 'auto'
+      'fmtAuto'
+    else
+      @fmt.selected_item
+    end
+  end
+
   def to_command_line(n)
     if separate_files
-      ret = ["-separate","-"+@fmt.selected_item, "-#{read_type}#{n}"]
+      ret = ["-separate","-"+format_command_line, "-#{read_type}#{n}"]
       @files.each do |file|
         ret.concat [file[:file1].text, file[:file2].text]
       end
       ret
     else
-      ret = ["-interleaved","-"+@fmt.selected_item, "-#{read_type}#{n}"]
+      ret = ["-interleaved","-"+format_command_line, "-#{read_type}#{n}"]
       @files.each do |file|
         ret.concat [file[:file1].text]
       end
@@ -464,10 +477,22 @@ class VelvetGUI < JFrame
     check_velvet_exists
 
     # HACK for testing!
-    if ARGV.length > 0
-      @main_opts.instance_variable_get('@file1').send('text=', ARGV[0])
-      @filesSelector.instance_variable_get('@selectors').first.set_file(ARGV[1])
-    end
+    OptionParser.new do |opts|
+      opts.banner = "Usage: java -jar vague.har [options]"
+
+      opts.on("-o DIR", "--output", String, "Set output director") do |v|
+        @main_opts.instance_variable_get('@file1').send('text=', v)
+      end
+
+      opts.on("-f FILE", "--file", "Specify reads file") do |v|
+        @filesSelector.instance_variable_get('@selectors').first.set_file(v)
+      end
+
+      opts.on("-r", "--results", "Load and display results from the output director") do |v|
+        @output.update_results(File.join(@main_opts.out_directory,"contigs.fa"), "")
+        @output.update_results(File.join(@main_opts.out_directory,"contigs.fa"), "")
+      end
+    end.parse!
 
     setLocationRelativeTo(nil)
   end
@@ -505,6 +530,11 @@ class VelvetGUI < JFrame
     content_pane.removeAll
     query_velvet
     create_components
+
+    if @velveth.version < VELVET_REQUIRED_VERSION
+      JOptionPane.showMessageDialog(self, "Velvet version #{VELVET_REQUIRED_VERSION} or later is required.",
+                                    "bad velvet version", JOptionPane::WARNING_MESSAGE)
+    end
   end
 
   def set_velvet_path(path)

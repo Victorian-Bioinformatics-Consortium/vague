@@ -54,16 +54,17 @@ class ResultStats < JComponent
   def update_results(log_output, velvet_results)
     remove_all
     md = log_output.match(/n50 of (\d+), max (\d+), total (\d+)/)
-    return if !md
 
-    add_gb label("Total BP ")
-    add_gb value(md[3]), :gridwidth => :remainder, :weightx =>1
-    add_gb label("Max contig ")
-    add_gb value(md[2]), :gridwidth => :remainder
-    add_gb label("Min contig ")
-    add_gb value(velvet_results.min_contig.to_s), :gridwidth => :remainder
-    add_gb label("N50 ")
-    add_gb value(md[1]), :gridwidth => :remainder
+    if md
+      add_gb label("Total BP ")
+      add_gb value(md[3]), :gridwidth => :remainder, :weightx =>1
+      add_gb label("Max contig ")
+      add_gb value(md[2]), :gridwidth => :remainder
+      add_gb label("Min contig ")
+      add_gb value(velvet_results.min_contig.to_s), :gridwidth => :remainder
+      add_gb label("N50 ")
+      add_gb value(md[1]), :gridwidth => :remainder
+    end
     add_gb label("Num contigs ")
     add_gb value(velvet_results.num_contigs.to_s), :gridwidth => :remainder
 
@@ -84,7 +85,7 @@ class VelvetResultsComp < JComponent
     @sequence.editable = false
     @sequence.font = Font.new("Monospaced", Font::PLAIN, 12)
 
-    @contigs.addListSelectionListener {|e| @sequence.text = @results.contig(@contigs.selected_value) }
+    @contigs.addListSelectionListener {|e| @sequence.text = @results.contig(@contigs.selected_value) if @contigs.selected_value }
 
     vbox = Box.createVerticalBox
     vbox.add(@result_stats = ResultStats.new)
@@ -97,8 +98,8 @@ class VelvetResultsComp < JComponent
   def update_results(file, log_output)
     @results = VelvetResults.new(file)
     @contigs.list_data = @results.contig_names.to_java
-    @contigs.selected_index = 0
     @result_stats.update_results(log_output, @results) if log_output
+    @contigs.selected_index = 0
 
     @splitPane.divider_location=0.4
     revalidate
