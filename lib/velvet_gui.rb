@@ -7,8 +7,8 @@ require 'runner'
 require 'velvet_results'
 require 'help_dialog'
 require 'estimate_kmer'
+require 'version'
 
-VAGUE_VERSION = "1.0"
 VELVET_REQUIRED_VERSION = '1.2.07'
 
 include_class %w(java.awt.event.ActionListener
@@ -573,6 +573,7 @@ class VelvetGUI < JFrame
 
     vbox.add(JScrollPane.new(OptionList.new(opts)))
     vbox
+    #JScrollPane.new(vbox, ScrollPaneConstants::VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants::HORIZONTAL_SCROLLBAR_NEVER)
   end
 
   def show_about
