@@ -8,6 +8,7 @@ require 'velvet_results'
 require 'help_dialog'
 require 'estimate_kmer'
 
+VAGUE_VERSION = "1.0"
 VELVET_REQUIRED_VERSION = '1.2.07'
 
 include_class %w(java.awt.event.ActionListener
@@ -578,8 +579,9 @@ class VelvetGUI < JFrame
     str = <<-STR;
       <html>
         <h2>Vague - Velvet Assembler Graphical User Environment</h2>
+        Version #{VAGUE_VERSION}
         Written by <b>David R. Powell</b> (<code>david.powell@monash.edu</code>)
-        <i>Victorian Bioinformatics Consortium</i>
+        <i>Victorian Bioinformatics Consortium, Monash University</i>
     STR
     str.gsub!(/^\s+/,'')
     str.gsub!(/\n/,'<br>')
