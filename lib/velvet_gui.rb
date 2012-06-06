@@ -132,7 +132,7 @@ class FileSelector < JComponent
   end
 
   def default_dir(fld)
-    [fld.text, @files.first[:file1].text, @files.first[:file2].text].reject(&:empty?).first
+    [fld.text, @files.first[:file1].text, @files.first[:file2].text, Dir.pwd].reject(&:empty?).first
   end
 
   def select_file(fileField)
@@ -364,7 +364,7 @@ class MainOptions < JComponent
   end
 
   def select_file(fileField)
-    fc=JFileChooser.new(fileField.text)
+    fc=JFileChooser.new(fileField.text.length>0 ? fileField.text : Dir.pwd)
     fc.setFileSelectionMode(JFileChooser::DIRECTORIES_ONLY)
     if fc.showOpenDialog(fileField)==0
       fileField.set_text fc.getSelectedFile.getPath
@@ -656,7 +656,7 @@ class VelvetGUI < JFrame
 
   def analyze
     out_dir = @main_opts.out_directory
-    if !File.directory?(out_dir)
+    if out_dir.trim.length == 0
       JOptionPane.showMessageDialog(self, "You must specify a valid output directory", "Invalid", JOptionPane::ERROR_MESSAGE)
       return
     end

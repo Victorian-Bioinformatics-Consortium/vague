@@ -1,9 +1,11 @@
 
-DISTFILES = README.txt vague.sh vague.jar
+DISTFILES = README.txt vague vague.jar
 
 VERSION := $(shell jruby -Ilib -e 'require "version"; puts VAGUE_VERSION')
 
-vague.jar:
+DEPS := $(shell find . -name '*.rb')
+
+vague.jar: $(DEPS)
 	jruby -S warble compiled jar
 
 dist: vague.jar
