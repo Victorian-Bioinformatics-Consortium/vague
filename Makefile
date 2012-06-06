@@ -8,9 +8,9 @@ vague.jar:
 
 dist: vague.jar
 	@rm -rf tmp
-	@mkdir -p tmp/vague
-	@cp $(DISTFILES) tmp/vague
-	tar czf vague-$(VERSION).tar.gz -C tmp vague
+	@mkdir -p tmp/vague-$(VERSION)
+	@cp $(DISTFILES) tmp/vague-$(VERSION)
+	tar czf vague-$(VERSION).tar.gz -C tmp vague-$(VERSION)
 
 clean:
 	rm -rf tmp vague.jar vague-$(VERSION).tar.gz

@@ -5,6 +5,8 @@ to use velvet for the most common options.
 
 Source available at https://github.com/Victorian-Bioinformatics-Consortium/vague
 
-=== REQUIREMENTS ====
+=== DEPENDENCIES ====
 
  - velvet >= 1.2.07
+ - jre >= 1.6
+ - velvetk >= 1.0 (optional)
