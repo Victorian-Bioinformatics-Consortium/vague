@@ -85,7 +85,7 @@ class VelvetResultsComp < JComponent
     @sequence.editable = false
     @sequence.font = Font.new("Monospaced", Font::PLAIN, 12)
 
-    @contigs.addListSelectionListener {|e| @sequence.text = @results.contig(@contigs.selected_value) if @contigs.selected_value }
+    @contigs.addListSelectionListener {|e| select_contig }
 
     vbox = Box.createVerticalBox
     vbox.add(@result_stats = ResultStats.new)
@@ -93,6 +93,12 @@ class VelvetResultsComp < JComponent
 
     add(@splitPane = JSplitPane.new(1, vbox, JScrollPane.new(@sequence)))
     update_results(nil, nil)
+  end
+
+  def select_contig
+    return if !@contigs.selected_value
+    @sequence.text = @results.contig(@contigs.selected_value)
+    @sequence.setCaretPosition(0)
   end
 
   def update_results(file, log_output)

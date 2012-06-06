@@ -30,11 +30,13 @@ class EstimateKmer < JDialog
     add_gb(@progbar = JProgressBar.new, :gridwidth => :remainder)
     @progbar.visible = false
 
+    add_gb(Box.createVerticalStrut(10), :gridwidth => :remainder)
+
     hbox = Box.createHorizontalBox
     hbox.add(Box.createHorizontalGlue)
-    hbox.add(@est_but = JButton.new("Estimate!"))
-    hbox.add(Box.createHorizontalGlue)
     hbox.add(cancel = JButton.new("Cancel"))
+    hbox.add(Box.createHorizontalGlue)
+    hbox.add(@est_but = JButton.new("Estimate!"))
     hbox.add(Box.createHorizontalGlue)
     add_gb(hbox, :gridwidth => :remainder)
 

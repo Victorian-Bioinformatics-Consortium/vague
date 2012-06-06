@@ -333,6 +333,8 @@ class MainOptions < JComponent
     @min_contig_len_tf.text = 500.to_s
     @hash_length.add_action_listener {|e| update_auto_contig_length }
     update_auto_contig_length
+
+    setMaximumSize Dimension.new(getMaximumSize.width, getPreferredSize.height)
   end
 
   def select_kmer(n)
@@ -440,11 +442,14 @@ class VelvetInfo < JComponent
     end
     add_gb(@loc_lbl, :gridwidth => 2, :weightx => 1)
 
+    gb_set_tip("Set path to the velvet binaries")
     add_gb(but = JButton.new("Set"))
     but.add_action_listener {|e| select_velvet_dir }
+    gb_set_tip("Reset path to the velvet binaries")
     add_gb(but2 = JButton.new("Reset"))
     but2.add_action_listener {|e| firePropertyChange("path", nil, "") }
     but2.visible = !@velveth.path.nil?
+    gb_set_tip(nil)
     add_gb(JLabel.new, :gridwidth => :remainder)     # End of row filler
 
 
@@ -470,7 +475,7 @@ end
 
 class VelvetGUI < JFrame
   def initialize
-    super "Velvet"
+    super "Vague"
 
     path = Settings.velvet_directory
     update_velvet_binary(path)
@@ -573,7 +578,6 @@ class VelvetGUI < JFrame
 
     vbox.add(JScrollPane.new(OptionList.new(opts)))
     vbox
-    #JScrollPane.new(vbox, ScrollPaneConstants::VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants::HORIZONTAL_SCROLLBAR_NEVER)
   end
 
   def show_about
@@ -636,6 +640,7 @@ class VelvetGUI < JFrame
     @analyzeBut.setToolTipText "Run velvet assembler"
 
     vbox
+    #JScrollPane.new(vbox, ScrollPaneConstants::VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants::HORIZONTAL_SCROLLBAR_NEVER)
   end
 
   def show_estimate_kmer

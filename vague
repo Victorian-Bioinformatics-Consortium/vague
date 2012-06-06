@@ -1,1 +1,2 @@
+echo "Starting Vague, please wait..."
 java -Xmx3750m -jar `dirname $0`/vague.jar $*
