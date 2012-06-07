@@ -40,6 +40,7 @@ include_class %w(java.awt.event.ActionListener
                  javax.swing.JTabbedPane
                  javax.swing.border.TitledBorder
                  javax.swing.text.DefaultCaret
+                 javax.swing.UIManager
                 )
 
 class Settings
@@ -477,6 +478,8 @@ class VelvetGUI < JFrame
   def initialize
     super "Vague"
 
+    UIManager::look_and_feel = UIManager::getSystemLookAndFeelClassName
+    
     path = Settings.velvet_directory
     update_velvet_binary(path)
 
