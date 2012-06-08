@@ -5,6 +5,8 @@ to use velvet for the most common options.
 
 Source available at https://github.com/Victorian-Bioinformatics-Consortium/vague
 
+Written by David R. Powell (david.powell@monash.edu)
+
 === DEPENDENCIES ====
 
  - velvet >= 1.2.07

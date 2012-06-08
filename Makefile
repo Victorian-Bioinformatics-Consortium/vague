@@ -1,5 +1,5 @@
 
-DISTFILES = README.txt vague vague.jar
+DISTFILES = README.txt vague vague.jar COPYING.txt ChangeLog
 
 VERSION := $(shell jruby -Ilib -e 'require "version"; puts VAGUE_VERSION')
 
