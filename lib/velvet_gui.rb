@@ -60,6 +60,10 @@ include_class %w(java.awt.event.ActionListener
                  javax.swing.text.DefaultCaret
                 )
 
+def isOSX
+  System.getProperty("os.name").include?('OS X')
+end
+
 class Settings
   def self.prefs
     @prefs ||= Preferences.userRoot.node('vbc/vague')
@@ -384,6 +388,14 @@ class MainOptions < JComponent
   end
 
   def select_dir(fileField)
+    if isOSX
+      select_dir_macosx(fileField)
+    else
+      select_dir_other(fileField)
+    end
+  end
+
+  def select_dir_macosx(fileField)
     System.setProperty("apple.awt.fileDialogForDirectories", "true")
     d = FileDialog.new(JFrame.new, "Select output directory")
     d.setDirectory(fileField.text.length>0 ? fileField.text : Dir.pwd)
@@ -394,13 +406,13 @@ class MainOptions < JComponent
     end
   end
 
-  # def select_dir(fileField)
-  #   fc=JFileChooser.new(fileField.text.length>0 ? fileField.text : Dir.pwd)
-  #   fc.setFileSelectionMode(JFileChooser::DIRECTORIES_ONLY)
-  #   if fc.showOpenDialog(fileField)==0
-  #     fileField.set_text fc.getSelectedFile.getPath
-  #   end
-  # end
+  def select_dir_other(fileField)
+    fc=JFileChooser.new(fileField.text.length>0 ? fileField.text : Dir.pwd)
+    fc.setFileSelectionMode(JFileChooser::DIRECTORIES_ONLY)
+    if fc.showOpenDialog(fileField)==0
+      fileField.set_text fc.getSelectedFile.getPath
+    end
+  end
 
   def update_auto_contig_length
     if @min_contig_len_combo.selected_item == 'Auto'
