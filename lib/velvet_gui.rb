@@ -678,7 +678,7 @@ class VelvetGUI < JFrame
 
   def analyze
     out_dir = @main_opts.out_directory
-    if out_dir.trim.length == 0
+    if out_dir.strip.length == 0
       JOptionPane.showMessageDialog(self, "You must specify a valid output directory", "Invalid", JOptionPane::ERROR_MESSAGE)
       return
     end

@@ -1,3 +1,6 @@
 
+V 1.0.1
+- Fix startup bug if velveth cannot be found
+
 V 1.0
 - Initial release
