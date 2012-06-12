@@ -554,7 +554,7 @@ class VelvetGUI < JFrame
     query_velvet
     create_components
 
-    if @velveth.version < VELVET_REQUIRED_VERSION
+    if @velveth.found && @velveth.version < VELVET_REQUIRED_VERSION
       JOptionPane.showMessageDialog(self, "Velvet version #{VELVET_REQUIRED_VERSION} or later is required.",
                                     "bad velvet version", JOptionPane::WARNING_MESSAGE)
     end
