@@ -35,6 +35,7 @@ include_class %w(java.awt.event.ActionListener
                  java.awt.Dimension
                  java.awt.Color
                  java.awt.Font
+                 java.awt.FileDialog
                  java.lang.System
                  java.util.prefs.Preferences
                  javax.imageio.ImageIO
@@ -58,6 +59,10 @@ include_class %w(java.awt.event.ActionListener
                  javax.swing.border.TitledBorder
                  javax.swing.text.DefaultCaret
                 )
+
+def isOSX
+  System.getProperty("os.name").include?('OS X')
+end
 
 class Settings
   def self.prefs
@@ -319,7 +324,7 @@ class MainOptions < JComponent
     add_gb(JLabel.new("Output Directory: "))
     add_gb(@file1 = JTextField.new, :weightx => 1, :gridwidth=>2)
     add_gb(file1Btn = JButton.new("..."), :gridwidth => :remainder)
-    file1Btn.add_action_listener {|e| select_file(@file1) }
+    file1Btn.add_action_listener {|e| select_dir(@file1) }
 
     gb_set_tip 'Size of k-mer (hash_length) to use for velvet'
     add_gb(JLabel.new("K-mer size: "))
@@ -382,7 +387,26 @@ class MainOptions < JComponent
     tf.enabled = combo.selected_item != "Auto"
   end
 
-  def select_file(fileField)
+  def select_dir(fileField)
+    if isOSX
+      select_dir_macosx(fileField)
+    else
+      select_dir_other(fileField)
+    end
+  end
+
+  def select_dir_macosx(fileField)
+    System.setProperty("apple.awt.fileDialogForDirectories", "true")
+    d = FileDialog.new(JFrame.new, "Select output directory")
+    d.setDirectory(fileField.text.length>0 ? fileField.text : Dir.pwd)
+    d.setVisible(true)
+    f = d.getFile
+    if f
+      fileField.set_text File.join(d.getDirectory, f)
+    end
+  end
+
+  def select_dir_other(fileField)
     fc=JFileChooser.new(fileField.text.length>0 ? fileField.text : Dir.pwd)
     fc.setFileSelectionMode(JFileChooser::DIRECTORIES_ONLY)
     if fc.showOpenDialog(fileField)==0
