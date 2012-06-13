@@ -66,18 +66,12 @@ class EstimateKmer < JDialog
     setVisible(true)
   end
 
-  def backticks(args)
-    cmd = args.map{|s| Shellwords::escape s}.join ' '
-    p cmd
-    `#{cmd}`
-  end
-
   def exe
-    if @path
-      File.join(@path,"velvetk.pl")
-    else
-      "velvetk.pl"
+    prog = "velvetk.pl"
+    if @path && File.executable?(File.join(@path, prog))
+      prog = File.join(@path, prog)
     end
+    prog
   end
 
   def run_failed
