@@ -58,6 +58,7 @@ include_class %w(java.awt.event.ActionListener
                  javax.swing.JTabbedPane
                  javax.swing.border.TitledBorder
                  javax.swing.text.DefaultCaret
+                 javax.swing.UIManager
                 )
 
 def isOSX
@@ -517,6 +518,16 @@ end
 class VelvetGUI < JFrame
   def initialize
     super "Vague"
+
+    # Let's force GTK lookAndFeel on linux.  According to tseemann and robsyme this looks better...
+    if !isOSX
+      # UIManager::look_and_feel = UIManager::getSystemLookAndFeelClassName
+      begin
+        UIManager::look_and_feel = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel"
+      rescue
+        # Ignore, and fallback
+      end
+    end
 
     path = Settings.velvet_directory
     update_velvet_binary(path)
