@@ -1,3 +1,7 @@
+V 1.0.2
+- Use FileDialog on macosx for choosing output directory (allows creating a directory)
+- Use Gtk Look and Feel on linux
+- Bundle velvetk.pl with vague
 
 V 1.0.1
 - Fix startup bug if velveth cannot be found
