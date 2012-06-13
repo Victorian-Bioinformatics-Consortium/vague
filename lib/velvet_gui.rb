@@ -336,11 +336,13 @@ class MainOptions < JComponent
     add_gb(JLabel.new("Coverage Cutoff: "))
     add_gb(@cutoff_combo = JComboBox.new(["Auto","Custom","Don't use"].to_java), :fill => :none)
     add_gb(@cutoff_tf = JTextField.new(5), :gridwidth => :remainder, :fill => :none)
+    @cutoff_tf.setMinimumSize(@cutoff_tf.getPreferredSize)
 
     gb_set_tip get_tip('exp_cov')
     add_gb(JLabel.new("Expected Coverage: "))
     add_gb(@estcov_combo = JComboBox.new(["Auto","Custom", "Don't use"].to_java), :fill => :none)
-    add_gb(@estcov_tf = JTextField.new(5), :gridwidth=>:remainder, :fill => :none)
+    add_gb(@estcov_tf = JTextField.new(5), :gridwidth => :remainder, :fill => :none)
+    @estcov_tf.setMinimumSize(@cutoff_tf.getPreferredSize)
     @cutoff_combo.add_action_listener {|e| set_custom_vis(@cutoff_combo, @cutoff_tf) }
     @estcov_combo.add_action_listener {|e| set_custom_vis(@estcov_combo, @estcov_tf) }
     set_custom_vis(@cutoff_combo, @cutoff_tf)
@@ -349,7 +351,8 @@ class MainOptions < JComponent
     gb_set_tip get_tip('min_contig_lgth')
     add_gb(JLabel.new("Min. contig length: "))
     add_gb(@min_contig_len_combo = JComboBox.new(["Auto","Custom"].to_java), :fill => :none)
-    add_gb(@min_contig_len_tf = JTextField.new(5), :gridwidth=>:remainder, :fill => :none)
+    add_gb(@min_contig_len_tf = JTextField.new(5), :gridwidth => :remainder, :fill => :none)
+    @min_contig_len_tf.setMinimumSize(@cutoff_tf.getPreferredSize)
     @min_contig_len_combo.add_action_listener {|e| set_custom_vis(@min_contig_len_combo, @min_contig_len_tf) }
     set_custom_vis(@min_contig_len_combo, @min_contig_len_tf)
     @min_contig_len_combo.selected_item = 'Custom'
