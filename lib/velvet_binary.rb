@@ -47,8 +47,10 @@ class VelvetBinary
       arch = "macosx-x86_64"
     end
     return if arch.nil?
+    return if ENV['VAGUE_DIR'].nil?
 
-    @actual_path = File.join("velvet-binaries", arch)
+    @actual_path = File.join(ENV['VAGUE_DIR'],"velvet-binaries", arch)
+
     parse_options
     if @found
       @inbuilt_velvet = true
@@ -69,7 +71,7 @@ class VelvetBinary
     end
   rescue => e
     @found = false
-    puts "Cannot run binary : #{e}"
+    puts "Cannot run binary : #{e}" if !@path.nil?
   end
 
   def parse_config_options(str)

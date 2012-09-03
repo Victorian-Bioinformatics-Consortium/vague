@@ -1,5 +1,5 @@
 
-DISTFILES = README.txt vague vague.jar COPYING.txt ChangeLog velvetk.pl
+DISTFILES = README.txt vague vague.jar COPYING.txt ChangeLog velvetk.pl velvet-binaries
 
 VERSION := $(shell jruby -Ilib -e 'require "version"; puts VAGUE_VERSION')
 
@@ -11,7 +11,7 @@ vague.jar: $(DEPS)
 dist: vague.jar
 	@rm -rf tmp
 	@mkdir -p tmp/vague-$(VERSION)
-	@cp $(DISTFILES) tmp/vague-$(VERSION)
+	@cp -a $(DISTFILES) tmp/vague-$(VERSION)
 	tar czf vague-$(VERSION).tar.gz -C tmp vague-$(VERSION)
 
 clean:

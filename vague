@@ -1,3 +1,4 @@
 echo "Starting Vague, please wait..."
-export PATH=$PATH:`dirname $0`
+export VAGUE_DIR=`dirname $0`
+export PATH=$PATH:$VAGUE_DIR
 java -Xmx3750m -jar `dirname $0`/vague.jar $*
