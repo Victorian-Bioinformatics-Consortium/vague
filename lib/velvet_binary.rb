@@ -15,21 +15,46 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+require 'rbconfig'
 require 'options'
 
 class VelvetBinary
-  attr_reader :comp_options, :std_options, :version, :found, :path
+  attr_reader :comp_options, :std_options, :version, :found, :path, :inbuilt_velvet
   def initialize(path, binary)
     @binary = binary
     @path = (path.nil? || path.length==0) ? nil : path
+    @actual_path = @path
     @comp_options ||= {}
     @std_options = Options.new
     parse_options
-    #puts "For #{binary}, version=#{@version}\n  comp_options=#{@comp_options.inspect}\n  std_options=#{@std_options.inspect}"
+
+    @inbuilt_velvet = false
+    try_inbuilt_velvet if !@found and @path.nil?
+
+    #puts "For #{binary}, version=#{@version}  actual_path=#{@actual_path}\n  comp_options=#{@comp_options.inspect}\n  std_options=#{@std_options.inspect}"
   end
 
   def exe
-    @path ? File.join(@path, @binary) : @binary
+    @actual_path ? File.join(@actual_path, @binary) : @binary
+  end
+
+  def try_inbuilt_velvet
+    os =Config::CONFIG['target_os']
+    arch = nil
+    if os =~ /linux/i
+      arch = "linux-x86_64"
+    elsif os =~ /darwin/i
+      arch = "macosx-x86_64"
+    end
+    return if arch.nil?
+
+    @actual_path = File.join("velvet-binaries", arch)
+    parse_options
+    if @found
+      @inbuilt_velvet = true
+    else
+      @actual_path = nil
+    end
   end
 
   def parse_options

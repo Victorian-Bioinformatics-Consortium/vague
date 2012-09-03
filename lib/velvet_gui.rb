@@ -478,7 +478,9 @@ class VelvetInfo < JComponent
     found_msg = if @velveth.found then "Using" else "Unable to find" end
     @loc_lbl = JLabel.new(if @velveth.path
                             "#{found_msg} velvet in : #{@velveth.path}"
-                          else
+                          elsif @velveth.inbuilt_velvet
+                            "#{found_msg} velvet shipped with VAGUE"
+                         else
                             "#{found_msg} velvet in system PATH"
                           end
                           )
