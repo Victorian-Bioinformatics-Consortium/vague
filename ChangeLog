@@ -1,3 +1,5 @@
+V 1.0.3
+- Ship VAGUE with velvet 1.2.07 binaries for linux and macosx
 V 1.0.2
 - Use FileDialog on macosx for choosing output directory (allows creating a directory)
 - Use Gtk Look and Feel on linux
