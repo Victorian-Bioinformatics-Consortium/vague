@@ -1,3 +1,6 @@
+V 1.0.4
+- Velvet is not "found" if we can't get its version.  Fixes a problem running on 32bit linux
+  when velvet is not installed
 V 1.0.3
 - Ship VAGUE with velvet 1.2.07 binaries for linux and macosx
 V 1.0.2
