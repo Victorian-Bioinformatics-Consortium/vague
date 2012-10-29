@@ -67,7 +67,7 @@ class VelvetBinary
       info.scan(/^Options:(.*?\n)\n/m) { |m| parse_standard_options m.first }
       info.scan(/^Standard options:(.*?\n)\n/m) { |m| parse_standard_options m.first }
       info.scan(/^Advanced options:(.*?\n)\n/m) { |m| parse_standard_options m.first }
-      @found = true
+      @found = true if @version
     end
   rescue => e
     @found = false
