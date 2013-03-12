@@ -17,7 +17,7 @@
 
 require 'shellwords'
 
-include_class %w(javax.swing.JDialog
+java_import %w(javax.swing.JDialog
                  javax.swing.JEditorPane
                  javax.swing.SwingUtilities
                  javax.swing.JProgressBar

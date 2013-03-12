@@ -16,7 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-include_class %w(javax.swing.JDialog
+java_import %w(javax.swing.JDialog
                  javax.swing.JEditorPane
                 )
 

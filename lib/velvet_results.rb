@@ -16,7 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-include_class %w(javax.swing.JComponent
+java_import %w(javax.swing.JComponent
                  javax.swing.JList
                  javax.swing.ListSelectionModel
                  javax.swing.JSplitPane
@@ -124,7 +124,10 @@ class VelvetResultsComp < JComponent
     @result_stats.update_results(log_output, @results) if log_output
     @contigs.selected_index = 0
 
-    @splitPane.divider_location=0.4
+    # Set splitPane divider.  Note use of "java_send" to avoid "ambiguous method" warning
+    #@splitPane.divider_location=0.4
+    @splitPane.java_send(:setDividerLocation, [Java::double], 0.4)
+
     revalidate
   end
 end

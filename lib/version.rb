@@ -15,4 +15,4 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-VAGUE_VERSION = "1.0.4"
+VAGUE_VERSION = "1.0.5"

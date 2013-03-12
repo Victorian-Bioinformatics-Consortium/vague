@@ -21,7 +21,7 @@ $LOAD_PATH.unshift("#{File.dirname(__FILE__)}/../lib")
 require 'java'
 require "velvet_gui"
 
-include_class %w(javax.swing.SwingUtilities)
+java_import %w(javax.swing.SwingUtilities)
 
 # Anti-aliased fonts by default (make linux slightly less ugly)
 System.setProperty("awt.useSystemAAFontSettings","on")

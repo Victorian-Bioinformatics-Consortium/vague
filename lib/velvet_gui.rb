@@ -28,7 +28,7 @@ require 'version'
 
 VELVET_REQUIRED_VERSION = '1.2.07'
 
-include_class %w(java.awt.event.ActionListener
+java_import %w(java.awt.event.ActionListener
                  java.awt.BorderLayout
                  java.awt.GridBagLayout
                  java.awt.GridBagConstraints
@@ -541,9 +541,9 @@ class VelvetGUI < JFrame
 
     # HACK for testing!
     OptionParser.new do |opts|
-      opts.banner = "Usage: java -jar vague.har [options]"
+      opts.banner = "Usage: java -jar vague.jar [options]"
 
-      opts.on("-o DIR", "--output", String, "Set output director") do |v|
+      opts.on("-o DIR", "--output", String, "Set output directory") do |v|
         @main_opts.instance_variable_get('@file1').send('text=', v)
       end
 
@@ -551,7 +551,7 @@ class VelvetGUI < JFrame
         @filesSelector.instance_variable_get('@selectors').first.set_file(v)
       end
 
-      opts.on("-r", "--results", "Load and display results from the output director") do |v|
+      opts.on("-r", "--results", "Load and display results from the output directory") do |v|
         @output.update_results(File.join(@main_opts.out_directory,"contigs.fa"), "")
         @output.update_results(File.join(@main_opts.out_directory,"contigs.fa"), "")
       end

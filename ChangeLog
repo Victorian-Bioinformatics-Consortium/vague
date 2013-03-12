@@ -1,3 +1,5 @@
+V 1.0.5
+- Fix deprecation warnings
 V 1.0.4
 - Velvet is not "found" if we can't get its version.  Fixes a problem running on 32bit linux
   when velvet is not installed

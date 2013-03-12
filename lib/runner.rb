@@ -18,7 +18,7 @@
 require 'java'
 require 'open3'
 
-include_class %w(java.beans.PropertyChangeSupport
+java_import %w(java.beans.PropertyChangeSupport
                  java.lang.ProcessBuilder
                 )
 
